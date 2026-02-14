@@ -1,0 +1,25 @@
+# Docker ignore files
+node_modules
+npm-debug.log*
+README.md
+.env
+.env.local
+.env.development.local
+.env.test.local
+npm
+.git
+.gitignore
+Dockerfile
+Dockerfile.prod
+docker-compose.yml
+.dockerignore
+.next
+.vercel
+coverage
+.nyc_output
+
+# Only include necessary files
+!package*.json
+!.next/static
+!.next/public/
+!src/
