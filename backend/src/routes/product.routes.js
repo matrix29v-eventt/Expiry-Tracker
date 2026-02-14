@@ -49,6 +49,28 @@ router.delete("/:id", protect, async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+/* MARK PRODUCT AS EXPIRED */
+router.put("/:id/expire", protect, async (req, res) => {
+  try {
+    const product = await Product.findOne({
+      _id: req.params.id,
+      user: req.userId,
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    product.isExpired = true;
+    await product.save();
+
+    res.json({ message: "Product marked as expired", product });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.put("/:id", protect, async (req, res) => {
   try {
     const product = await Product.findOneAndUpdate(
