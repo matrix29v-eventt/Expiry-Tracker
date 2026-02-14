@@ -6,11 +6,22 @@ import Image from "next/image";
 import UploadExpiryImage from "@/components/UploadExpiryImage";
 import toast from "react-hot-toast";
 
+const CATEGORIES = [
+  "Food & Beverages",
+  "Medicine",
+  "Cosmetics",
+  "Household",
+  "Electronics",
+  "Clothing",
+  "Other",
+];
+
 export default function AddProductPage() {
   const router = useRouter();
 
   const [name, setName] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
+  const [category, setCategory] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -80,6 +91,7 @@ const handleExpiryDetected = (detectedDate: string, confidence?: number, method?
           body: JSON.stringify({
             name,
             expiryDate,
+            category,
             ...(imageUrl ? { imageUrl } : {}),
           }),
         }
@@ -126,6 +138,24 @@ const handleExpiryDetected = (detectedDate: string, confidence?: number, method?
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
+            </div>
+
+            {/* Category Dropdown */}
+            <div className="mb-6">
+              <label htmlFor="category" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                Category
+              </label>
+              <select
+                id="category"
+                className="block w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-900 dark:text-white bg-white dark:bg-slate-700"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">Select a category</option>
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
             </div>
 
             {/* Expiry Date Detection Section */}

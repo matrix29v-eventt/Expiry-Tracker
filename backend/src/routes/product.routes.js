@@ -89,5 +89,25 @@ router.put("/:id", protect, async (req, res) => {
   }
 });
 
+/* EXPORT PRODUCTS AS CSV */
+router.get("/export", protect, async (req, res) => {
+  try {
+    const products = await Product.find({ user: req.userId });
+    
+    const csvHeader = "Name,Category,Expiry Date,Expired,Created At\n";
+    const csvRows = products.map(p => {
+      const expiryDate = new Date(p.expiryDate).toLocaleDateString();
+      const createdAt = new Date(p.createdAt).toLocaleDateString();
+      return `"${p.name}","${p.category || ''}","${expiryDate}","${p.isExpired ? 'Yes' : 'No'}","${createdAt}"`;
+    }).join("\n");
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=products.csv");
+    res.send(csvHeader + csvRows);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 
 export default router;

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import ProductCard from "@/components/ProductCard";
 import LogoutButton from "@/components/LogoutButton";
 import Notifications from "@/components/Notifications";
+import Analytics from "@/components/Analytics";
 
 interface Product {
   _id: string;
@@ -82,9 +83,57 @@ export default function DashboardClient() {
 
   // Search/filter
   const [search, setSearch] = useState("");
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase().trim())
-  );
+  const [sortBy, setSortBy] = useState("newest");
+  const [filterCategory, setFilterCategory] = useState("");
+
+  const exportToCSV = async () => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/export`,
+        { credentials: "include" }
+      );
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "products.csv";
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error("Export failed:", error);
+    }
+  };
+
+  const filtered = products
+    .filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase().trim());
+      const matchesCategory = !filterCategory || p.category === filterCategory;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "expiry":
+          return new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime();
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "oldest":
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        default:
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      }
+    });
+
+  const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
+
+  // Pull to refresh
+  const handleRefresh = () => {
+    setLoading(true);
+    fetchProducts();
+  };
 
   if (loading)
     return (
@@ -145,6 +194,42 @@ export default function DashboardClient() {
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
+            
+            {/* Category Filter */}
+            <select
+              className="px-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={filterCategory}
+              onChange={e => setFilterCategory(e.target.value)}
+            >
+              <option value="">All Categories</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+
+            {/* Sort Dropdown */}
+            <select
+              className="px-3 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="expiry">Expiry Date</option>
+              <option value="name">Name (A-Z)</option>
+            </select>
+
+            {/* Export Button */}
+            <button
+              onClick={exportToCSV}
+              className="inline-flex items-center px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Export
+            </button>
+
             <Link 
               href="/add-product" 
               className="inline-flex items-center px-4 py-2.5 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all"
@@ -203,6 +288,10 @@ export default function DashboardClient() {
           </div>
         </div>
       </div>
+
+      {/* Analytics Charts */}
+      <Analytics products={products} />
+
       <Notifications />
       
       {/* Products Section */}

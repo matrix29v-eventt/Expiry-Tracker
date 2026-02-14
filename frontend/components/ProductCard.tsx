@@ -17,10 +17,20 @@ export interface Product {
 
 // Simple category to emoji/icon mapping
 const categoryIcon: Record<string, string> = {
+  "Food & Beverages": "🍎",
+  "Food & beverage": "🍎",
   food: "🍎",
+  Medicine: "💊",
   medicine: "💊",
+  Cosmetics: "💄",
   cosmetics: "💄",
-  docs: "📄",
+  Household: "🏠",
+  household: "🏠",
+  Electronics: "📱",
+  electronics: "📱",
+  Clothing: "👕",
+  clothing: "👕",
+  "Other": "📦",
   other: "📦",
 };
 
@@ -78,7 +88,10 @@ export default function ProductCard({
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [swipeX, setSwipeX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+  const startXRef = useRef(0);
   
   const expiryStatus = getExpiryStatus(
     product.expiryDate, 
@@ -107,11 +120,49 @@ export default function ProductCard({
     }
   }, [fullImageUrl]);
 
+  // Swipe handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    startXRef.current = e.touches[0].clientX;
+    setIsSwiping(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isSwiping) return;
+    const currentX = e.touches[0].clientX;
+    const diff = currentX - startXRef.current;
+    if (diff < 0) {
+      setSwipeX(Math.max(diff, -100));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (swipeX < -50) {
+      onDelete(product._id);
+    }
+    setSwipeX(0);
+    setIsSwiping(false);
+  };
+
   return (
     <div 
       ref={cardRef}
       className={`relative overflow-hidden rounded-2xl glass card-hover ${bgColor} border ${borderColor} transition-all duration-500 group`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
+      {/* Swipe to delete indicator */}
+      {swipeX < 0 && (
+        <div className="absolute inset-y-0 right-0 bg-red-500 flex items-center justify-center px-4 rounded-2xl">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </div>
+      )}
+      
+      <div style={{ transform: `translateX(${swipeX}px)`, transition: isSwiping ? 'none' : 'transform 0.3s ease' }}>
+        {/* Product Image */}
+        {imageUrl && isVisible && (
       {/* Product Image */}
       {imageUrl && isVisible && (
         <div className="aspect-video relative overflow-hidden">
@@ -170,6 +221,7 @@ export default function ProductCard({
             </svg>
           </button>
         </div>
+      </div>
       </div>
     </div>
   );

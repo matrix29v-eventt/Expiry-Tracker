@@ -10,6 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
   title: "Expiry Tracker",
   description: "Never forget product expiry dates",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
