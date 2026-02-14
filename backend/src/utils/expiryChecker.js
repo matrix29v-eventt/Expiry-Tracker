@@ -55,6 +55,7 @@ export const startExpiryChecker = () => {
           user: product.user,
           product: product._id,
           message,
+          type: isAlreadyExpired ? "error" : "warning",
         });
 
         console.log("🔔 Notification created:", message);
