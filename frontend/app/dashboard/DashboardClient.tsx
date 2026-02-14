@@ -65,6 +65,33 @@ export default function DashboardClient() {
     setProducts((prev) => prev.filter((p) => p._id !== id));
   };
 
+  const markAsExpired = async (id: string) => {
+    const confirmExpired = confirm("Mark this product as expired?");
+    if (!confirmExpired) return;
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/${id}/expire`,
+        {
+          method: "PUT",
+          credentials: "include",
+        }
+      );
+
+      if (res.ok) {
+        setProducts((prev) =>
+          prev.map((p) => (p._id === id ? { ...p, isExpired: true } : p))
+        );
+      }
+    } catch (error) {
+      console.error("Failed to mark as expired:", error);
+    }
+  };
+
+  const editProduct = (id: string) => {
+    window.location.href = `/edit-product/${id}`;
+  };
+
   // === New dashboard summary logic ===
   function countExpiringSoon(list: Product[]) {
     const today = new Date();
@@ -423,6 +450,8 @@ export default function DashboardClient() {
                   key={product._id}
                   product={product}
                   onDelete={deleteProduct}
+                  onMarkExpired={markAsExpired}
+                  onEdit={editProduct}
                 />
               ))}
             </div>

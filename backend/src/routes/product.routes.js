@@ -1,5 +1,6 @@
 import express from "express";
 import Product from "../models/Product.js";
+import History from "../models/History.js";
 import { protect } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -9,7 +10,15 @@ router.post("/add", protect, async (req, res) => {
   try {
     const product = await Product.create({
       ...req.body,
-      user: req.userId, // 🔑 attach logged-in user
+      user: req.userId,
+    });
+
+    await History.create({
+      user: req.userId,
+      productName: product.name,
+      action: "added",
+      category: product.category,
+      expiryDate: product.expiryDate,
     });
 
     res.status(201).json(product);
@@ -36,12 +45,20 @@ router.delete("/:id", protect, async (req, res) => {
   try {
     const product = await Product.findOne({
       _id: req.params.id,
-      user: req.userId, // 🔒 ownership check
+      user: req.userId,
     });
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
+
+    await History.create({
+      user: req.userId,
+      productName: product.name,
+      action: "deleted",
+      category: product.category,
+      expiryDate: product.expiryDate,
+    });
 
     await product.deleteOne();
     res.json({ message: "Product deleted" });
@@ -64,6 +81,14 @@ router.put("/:id/expire", protect, async (req, res) => {
 
     product.isExpired = true;
     await product.save();
+
+    await History.create({
+      user: req.userId,
+      productName: product.name,
+      action: "expired",
+      category: product.category,
+      expiryDate: product.expiryDate,
+    });
 
     res.json({ message: "Product marked as expired", product });
   } catch (error) {

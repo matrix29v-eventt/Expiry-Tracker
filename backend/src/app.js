@@ -8,6 +8,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import ocrRoutes from "./routes/ocr.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import listRoutes from "./routes/list.routes.js";
+import historyRoutes from "./routes/history.routes.js";
 import path from "path";
 
 const app = express(); // ✅ APP MUST COME FIRST
@@ -32,6 +33,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/ocr", ocrRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/lists", listRoutes);
+app.use("/api/history", historyRoutes);
 
 // ✅ Health check (optional)
 app.get("/", (req, res) => {
