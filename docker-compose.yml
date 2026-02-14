@@ -1,0 +1,81 @@
+# ExpiryTracker Docker Configuration
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: expirytracker-backend
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=${MONGO_URI:-mongodb://admin:Expiry2026Mongo@mongodb:27017/expirytracker?authSource=admin}
+      - JWT_SECRET=${JWT_SECRET:-your_jwt_secret_here}
+      - FRONTEND_URL=http://localhost:3000
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      - mongodb
+    networks:
+      - expirytracker-network
+
+  # Frontend Web Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:5000}
+        - NEXT_PUBLIC_ENVIRONMENT=production
+    container_name: expirytracker-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+      - ocr-service
+    networks:
+      - expirytracker-network
+
+  # OCR Microservice
+  ocr-service:
+    build:
+      context: ./ocr-service
+      dockerfile: Dockerfile
+    container_name: expirytracker-ocr-service
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+      - OCR_CONFIDENCE_THRESHOLD=0.85
+    volumes:
+      - ./ocr-service/logs:/app/logs
+    networks:
+      - expirytracker-network
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7
+    container_name: expirytracker-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME:-admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-Expiry2026Mongo}
+      - MONGO_INITDB_DATABASE=expirytracker
+    networks:
+      - expirytracker-network
+
+networks:
+  expirytracker-network:
+    driver: bridge
+
+volumes:
+  mongodb-data:
+    driver: local

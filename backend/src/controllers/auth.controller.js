@@ -6,13 +6,30 @@ const createToken = (userId) => {
   return jwt.sign(
     { id: userId },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
+    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
 };
 
 /* REGISTER */
 export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
+
+  // Validation
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({ message: "Password must be at least 8 characters long" });
+  }
+
+  if (!email.includes('@') || !email.includes('.')) {
+    return res.status(400).json({ message: "Please enter a valid email address" });
+  }
+
+  if (name.length < 2) {
+    return res.status(400).json({ message: "Name must be at least 2 characters long" });
+  }
 
   const exists = await User.findOne({ email });
   if (exists) return res.status(400).json({ message: "User already exists" });
@@ -36,6 +53,19 @@ export const logoutUser = (req, res) => {
 /* LOGIN */
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
+
+  // Validation
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({ message: "Password must be at least 8 characters long" });
+  }
+
+  if (!email.includes('@') || !email.includes('.')) {
+    return res.status(400).json({ message: "Please enter a valid email address" });
+  }
 
   const user = await User.findOne({ email });
   if (!user) return res.status(404).json({ message: "User not found" });
