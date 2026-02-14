@@ -109,5 +109,85 @@ router.get("/export", protect, async (req, res) => {
   }
 });
 
+/* IMPORT PRODUCTS FROM CSV (BATCH) */
+router.post("/import", protect, async (req, res) => {
+  try {
+    const { products } = req.body;
+    
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ message: "No products provided" });
+    }
+
+    const productsToCreate = products.map(p => ({
+      name: p.name,
+      expiryDate: p.expiryDate,
+      category: p.category || "",
+      user: req.userId,
+    }));
+
+    const createdProducts = await Product.insertMany(productsToCreate);
+    
+    res.status(201).json({ 
+      message: `Successfully imported ${createdProducts.length} products`,
+      count: createdProducts.length 
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+/* FULL DATA BACKUP */
+router.get("/backup", protect, async (req, res) => {
+  try {
+    const products = await Product.find({ user: req.userId });
+    const backup = {
+      version: "1.0",
+      exportedAt: new Date().toISOString(),
+      products: products.map(p => ({
+        name: p.name,
+        expiryDate: p.expiryDate,
+        category: p.category,
+        isExpired: p.isExpired,
+        createdAt: p.createdAt,
+      })),
+    };
+
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Content-Disposition", "attachment; filename=expiry-tracker-backup.json");
+    res.json(backup);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/* RESTORE DATA FROM BACKUP */
+router.post("/restore", protect, async (req, res) => {
+  try {
+    const { products } = req.body;
+    
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ message: "Invalid backup data" });
+    }
+
+    // Delete existing products
+    await Product.deleteMany({ user: req.userId });
+
+    // Create new products
+    const productsToCreate = products.map(p => ({
+      name: p.name,
+      expiryDate: p.expiryDate,
+      category: p.category || "",
+      isExpired: p.isExpired || false,
+      user: req.userId,
+    }));
+
+    await Product.insertMany(productsToCreate);
+    
+    res.json({ message: `Successfully restored ${productsToCreate.length} products` });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
 
 export default router;
