@@ -12,6 +12,7 @@ interface Product {
   name: string;
   expiryDate: string;
   category?: string;
+  createdAt?: string;
 }
 
 export default function DashboardClient() {

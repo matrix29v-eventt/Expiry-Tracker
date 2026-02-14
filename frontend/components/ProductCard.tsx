@@ -163,8 +163,6 @@ export default function ProductCard({
       <div style={{ transform: `translateX(${swipeX}px)`, transition: isSwiping ? 'none' : 'transform 0.3s ease' }}>
         {/* Product Image */}
         {imageUrl && isVisible && (
-      {/* Product Image */}
-      {imageUrl && isVisible && (
         <div className="aspect-video relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           {/* Placeholder while loading */}
