@@ -224,3 +224,66 @@ export default function ProductCard({
 - Implement proper CORS settings for frontend-backend communication
 - Validate and sanitize all user inputs
 - Use httpOnly cookies for JWT tokens to prevent XSS
+
+## Git Commit Guidelines
+
+### Convention
+All commits MUST follow [Conventional Commits](https://www.conventionalcommits.org/) format:
+
+```
+<type>(<scope>): <description>
+```
+
+### Commit After Each Change
+After every file modification, create a commit with a clear, descriptive message. Do NOT batch unrelated changes into a single commit.
+
+### Allowed Types
+
+| Type | When to Use | Example |
+|---|---|---|
+| `feat` | New feature or functionality | `feat(auth): add password reset endpoint` |
+| `fix` | Bug fix | `fix(ocr): handle missing date in scanned text` |
+| `chore` | Maintenance, dependencies, config | `chore: update docker-compose mongo version` |
+| `docs` | Documentation only | `docs: update API endpoint descriptions` |
+| `style` | Code style (formatting, no logic change) | `style(frontend): fix lint warnings in Navbar` |
+| `refactor` | Code restructuring (no feature/fix) | `refactor(product): extract validation to middleware` |
+| `test` | Adding or updating tests | `test(auth): add login edge case tests` |
+| `perf` | Performance improvement | `perf(dashboard): memoize analytics calculations` |
+| `ci` | CI/CD pipeline changes | `ci: add GitHub Actions build workflow` |
+| `build` | Build system or external dependencies | `build: add Dockerfile for OCR service` |
+| `revert` | Revert a previous commit | `revert: undo OCR config change` |
+
+### Scope (Optional but Recommended)
+Use the affected module as scope:
+
+- `backend` — Express API changes
+- `frontend` — Next.js app changes
+- `auth` — Authentication system
+- `ocr` — OCR functionality
+- `product` — Product CRUD
+- `notification` — Notification system
+- `docker` — Container/infrastructure
+- `db` — Database schema/models
+
+### Commit Message Rules
+1. **Description** must be lowercase, imperative mood, no period, max 72 chars
+2. **Body** (optional) — explain WHY, not what (wrap at 80 chars)
+3. **Footer** (optional) — reference issues: `Closes #123`
+
+### Examples
+```bash
+git commit -m "feat(product): add CSV import/export endpoint"
+git commit -m "fix(auth): prevent token expiry race condition"
+git commit -m "chore(deps): upgrade mongoose to v7.0.0"
+git commit -m "refactor(ocr): extract date parsing into separate service"
+git commit -m "perf(frontend): add lazy loading for product images"
+git commit -m "style: run prettier on backend routes"
+git commit -m "docs(readme): add setup instructions for Docker"
+```
+
+### Pre-commit Checklist
+Before committing, verify:
+- [ ] No secrets or environment variables in code
+- [ ] No `console.log` debug statements left behind
+- [ ] Code follows project style guidelines
+- [ ] Commit message accurately describes the change
