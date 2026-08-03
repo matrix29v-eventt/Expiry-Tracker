@@ -12,6 +12,7 @@ import historyRoutes from "./routes/history.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import pushRoutes from "./routes/push.routes.js";
+import { authLimiter, apiLimiter } from "./middleware/rateLimit.middleware.js";
 import path from "path";
 
 const app = express(); // ✅ APP MUST COME FIRST
@@ -30,7 +31,8 @@ app.use(cookieParser());
 app.use("/uploads", express.static(path.resolve("uploads")));
 
 // ✅ Routes (AFTER app is created)
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authLimiter, authRoutes);
+app.use("/api", apiLimiter);
 app.use("/api/products", productRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/ocr", ocrRoutes);
