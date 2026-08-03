@@ -19,6 +19,16 @@ export default function DashboardClient() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showProfilePrompt, setShowProfilePrompt] = useState(false);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && !data.phone) setShowProfilePrompt(true);
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -213,12 +223,6 @@ export default function DashboardClient() {
 
   const categories = Array.from(new Set(products.map(p => p.category).filter(Boolean))) as string[];
 
-  // Pull to refresh
-  const handleRefresh = () => {
-    setLoading(true);
-    fetchProducts();
-  };
-
   if (loading)
     return (
       <div className="p-6 max-w-7xl mx-auto">
@@ -255,6 +259,30 @@ export default function DashboardClient() {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      {showProfilePrompt && (
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 border border-blue-200 dark:border-blue-800">
+          <div className="flex items-center gap-4">
+            <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h13a2 2 0 012 2v10a2 2 0 01-2 2h-7.5L6 21v-4H5a2 2 0 01-2-2V5z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900 dark:text-white">Complete your profile</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Add your phone number to get WhatsApp reminders on expiry day. Takes 10 seconds.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/complete-profile"
+            className="inline-flex items-center px-4 py-2.5 rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-sm font-semibold shadow-sm whitespace-nowrap"
+          >
+            Set up alerts
+          </Link>
+        </div>
+      )}
+
       {/* Professional Dashboard Header */}
       <div className="mb-8">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">

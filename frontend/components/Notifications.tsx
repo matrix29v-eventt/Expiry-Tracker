@@ -5,14 +5,14 @@ import { useEffect, useState, useRef } from "react";
 interface Notification {
   _id: string;
   message: string;
-  type?: "info" | "warning" | "error" | "success";
+  type?: "info" | "warning" | "error" | "expiry" | "success";
   createdAt?: string;
 }
 
 interface Toast {
   id: string;
   message: string;
-  type: "info" | "warning" | "error" | "success";
+  type: "info" | "warning" | "error" | "expiry" | "success";
 }
 
 export default function Notifications() {
@@ -23,13 +23,38 @@ export default function Notifications() {
   const previousCountRef = useRef(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  const sendBrowserNotification = (message: string) => {
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      new Notification("Expiry Tracker", {
+        body: message,
+        icon: "/favicon.ico",
+        badge: "/favicon.ico",
+        tag: "expiry-notification",
+        requireInteraction: true,
+      });
+    }
+  };
+
+  const showToast = (notification: Notification) => {
+    const type = notification.type || "info";
+    const id = notification._id || Date.now().toString();
+
+    setToasts((prev) => [...prev, { id, message: notification.message, type }]);
+
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => {});
+    }
+
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  };
+
   useEffect(() => {
     audioRef.current = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2teleScVZK3a27FmIRlTqt3iuoMrCE+r3+3EejcQZrLk7b5zKxFVrOPvxH44DGGx5e7EeTgOUrDn8cR9Og1gsebxvoE8E1qw6fK/gkITVrHt8sCDPBRasO3ywYM9FVmw7vPBhD4WWbDv9MKFPhZZsPD1w4Y+F1qw8ffEiD8XWbDy+MWIPxdZsPP5xog/F1mw8/rGiD8XWbD0+8aIPxdZsPT7xog/F1mw9PvGiD8XWbD0+8aIPxdZsPT7xog/F1mw9PvGiD8XWbD0+8aIPxdZsPT7xog/F1mw9PvGiD8XWbD0+8aIPxdZsPT7xog/F1mw9PvGiD8XWbD0+8aIPxdZsPT7xog/F1mw9PvGiD8XWbD0+8aIPxdZsPT7xog/F1mw9PvGiD8XWbD0+8aIPxdZsPT7xIg=");
 
-    if (typeof window !== "undefined" && "Notification" in window) {
-      if (Notification.permission === "granted") {
-        setPermissionGranted(true);
-      }
+    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+      setTimeout(() => setPermissionGranted(true), 0);
     }
 
     const fetchNotifications = async () => {
@@ -73,39 +98,14 @@ export default function Notifications() {
     }
   };
 
-  const sendBrowserNotification = (message: string) => {
-    if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-      new Notification("Expiry Tracker", {
-        body: message,
-        icon: "/favicon.ico",
-        badge: "/favicon.ico",
-        tag: "expiry-notification",
-        requireInteraction: true,
-      });
-    }
-  };
-
-  const showToast = (notification: Notification) => {
-    const type = notification.type || "info";
-    const id = notification._id || Date.now().toString();
-    
-    setToasts((prev) => [...prev, { id, message: notification.message, type }]);
-
-    if (audioRef.current) {
-      audioRef.current.play().catch(() => {});
-    }
-
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 5000);
-  };
-
   const getToastStyles = (type: string) => {
     switch (type) {
       case "warning":
         return "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400";
       case "error":
         return "bg-gradient-to-r from-red-500 to-pink-500 text-white border-red-400";
+      case "expiry":
+        return "bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-400";
       case "success":
         return "bg-gradient-to-r from-green-500 to-emerald-500 text-white border-green-400";
       default:
@@ -119,6 +119,8 @@ export default function Notifications() {
         return "⚠️";
       case "error":
         return "🚨";
+      case "expiry":
+        return "⏰";
       case "success":
         return "✅";
       default:
@@ -132,6 +134,8 @@ export default function Notifications() {
         return "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-200";
       case "error":
         return "bg-red-50 border-red-200 text-red-900 dark:bg-red-900/20 dark:border-red-700 dark:text-red-200";
+      case "expiry":
+        return "bg-orange-50 border-orange-200 text-orange-900 dark:bg-orange-900/20 dark:border-orange-700 dark:text-orange-200";
       case "success":
         return "bg-green-50 border-green-200 text-green-900 dark:bg-green-900/20 dark:border-green-700 dark:text-green-200";
       default:
@@ -167,7 +171,7 @@ export default function Notifications() {
 
       {/* Notification Panel */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg mb-6 overflow-hidden">
-        <div 
+        <div
           className="bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-3 cursor-pointer hover:from-blue-600 hover:to-indigo-700 transition-all"
           onClick={() => setShowPanel(!showPanel)}
         >
@@ -221,6 +225,7 @@ export default function Notifications() {
                     <span className="text-lg">
                       {n.type === "warning" && "⚠️"}
                       {n.type === "error" && "🚨"}
+                      {n.type === "expiry" && "⏰"}
                       {n.type === "success" && "✅"}
                       {(!n.type || n.type === "info") && "🔔"}
                     </span>

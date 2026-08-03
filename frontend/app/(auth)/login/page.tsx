@@ -70,7 +70,11 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard");
+      const isNewUser =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("new") === "1";
+
+      router.push(isNewUser ? "/complete-profile" : "/dashboard");
     } catch {
       setError("Network error. Please try again.");
     } finally {

@@ -15,13 +15,30 @@ export default function RegisterPage() {
   const [form, setForm] = useState<RegisterForm>({
     name: "",
     email: "",
-    password: ""
+    password: "",
+    phone: "",
+    countryCode: "91",
+    notificationPreferences: { email: true, whatsapp: false }
   });
 
   const [passwordError, setPasswordError] = useState("");
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm((prev) =>
+      type === "checkbox"
+        ? {
+            ...prev,
+            notificationPreferences: {
+              email: prev.notificationPreferences?.email ?? true,
+              whatsapp:
+                name === "whatsapp"
+                  ? checked
+                  : prev.notificationPreferences?.whatsapp ?? false,
+            },
+          }
+        : { ...prev, [name]: value }
+    );
     setError("");
     setSuccess("");
     
@@ -75,7 +92,7 @@ export default function RegisterPage() {
 
       setSuccess("Account created successfully! Redirecting to login...");
       setTimeout(() => {
-        router.push("/login");
+        router.push("/login?new=1");
       }, 2000);
     } catch {
       setError("Network error. Please try again.");
@@ -230,6 +247,47 @@ export default function RegisterPage() {
                 <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                   Must be at least 8 characters long
                 </p>
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                  Phone number <span className="font-normal text-slate-400">(optional, for WhatsApp alerts)</span>
+                </label>
+                <div className="grid grid-cols-[100px_1fr] gap-3">
+                  <input
+                    id="countryCode"
+                    name="countryCode"
+                    type="text"
+                    className="w-full px-3 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-slate-700 dark:text-white transition-all duration-200 text-center"
+                    placeholder="+91"
+                    onChange={handleChange}
+                    value={form.countryCode}
+                  />
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-slate-700 dark:text-white transition-all duration-200 placeholder-slate-500 dark:placeholder-slate-400"
+                    placeholder="9876543210"
+                    onChange={handleChange}
+                    value={form.phone || ""}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/50">
+                <input
+                  id="whatsapp"
+                  name="whatsapp"
+                  type="checkbox"
+                  className="h-5 w-5 text-green-600 focus:ring-green-500 border-slate-300 dark:border-slate-600 rounded"
+                  onChange={handleChange}
+                  checked={form.notificationPreferences?.whatsapp || false}
+                />
+                <label htmlFor="whatsapp" className="block text-sm text-slate-600 dark:text-slate-300 cursor-pointer">
+                  Get a WhatsApp reminder on the day a product expires
+                </label>
               </div>
 
               <div className="flex items-center justify-between">
