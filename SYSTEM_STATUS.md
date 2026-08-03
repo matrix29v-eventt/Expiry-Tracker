@@ -29,6 +29,8 @@
 - ✅ Dashboard with product listing
 - ✅ Configurable per-user product cap (`MAX_PRODUCTS`, default 500)
 - ✅ Filtered CSV export (by status, week presets, or custom date range)
+- ✅ Bulk actions: mark all past-expiry products as expired / delete all expired (with audit history)
+- ✅ Quantity and unit tracking ("2 bottles", "3 boxes") across add, edit, cards, CSV, import, and restore
 - ✅ Paginated product history and admin views
 
 #### **Docker Infrastructure**
@@ -55,6 +57,8 @@
 - ✅ Delivery status tracking (`sent` / `failed`) per channel
 - ✅ In-app notification type coloring (info / warning / expiry / error)
 - ✅ Paginated notification history (frontend + admin views)
+- ✅ "Send test notification" button in Settings (checks each enabled channel)
+- ✅ Weekly Monday email digest of everything expiring in the next 7 days
 - ✅ Automated Jest tests for expiry logic and delivery channels
 
 #### **Admin Panel**
@@ -71,6 +75,21 @@
 - ✅ Complete-profile onboarding flow after first registration
 - ✅ Admin / Settings links and unread notification badge in navbar
 - ✅ Commercial landing page (how-it-works, pricing, features)
+
+#### **PWA (Installable App)**
+- ✅ Installable web app manifest with 192px + 512px icons and maskable icon
+- ✅ `beforeinstallprompt` install banner (add to home screen)
+- ✅ Service worker for web push notifications
+- ✅ Standalone display mode with brand theme color
+
+#### **Shared Pantry / Lists**
+- ✅ Create and manage named lists (e.g. "Family pantry", "Medicine cabinet")
+- ✅ Invite members by email (accept flow with email notification)
+- ✅ Shareable join link (anyone with the link joins as viewer)
+- ✅ Editor / viewer roles with owner-controlled permissions
+- ✅ Owners can change roles, remove members, and cancel invites
+- ✅ Shared product CRUD scoped to list membership (viewers are read-only)
+- ✅ Lists surfaced in navbar and dedicated `/lists` page
 
 ---
 
