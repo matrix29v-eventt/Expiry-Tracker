@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AdminNotification } from "@/app/types/admin";
 import { apiFetch } from "@/app/lib/api";
+import Pagination from "@/components/Pagination";
 
 const channelStyles: Record<string, string> = {
   inapp: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300",
   email: "bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300",
   whatsapp: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
+  push: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300",
 };
 
 const typeStyles: Record<string, string> = {
@@ -22,13 +24,22 @@ export default function AdminNotificationsPage() {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [channel, setChannel] = useState("");
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const query = channel ? `?channel=${channel}` : "";
-        setNotifications(await apiFetch(`/api/admin/notifications${query}`));
+        const query = new URLSearchParams();
+        if (channel) query.set("channel", channel);
+        query.set("page", String(page));
+        query.set("limit", "20");
+        const data = await apiFetch(`/api/admin/notifications?${query}`);
+        setNotifications(data.data || []);
+        setTotal(data.total || 0);
+        setPages(data.pages || 1);
       } catch {
         toast.error("Failed to load notifications");
       } finally {
@@ -36,20 +47,23 @@ export default function AdminNotificationsPage() {
       }
     };
     load();
-  }, [channel]);
+  }, [channel, page]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Latest 200 delivery records</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{total} delivery records</p>
         </div>
         <div className="flex gap-2">
-          {["", "inapp", "email", "whatsapp"].map((c) => (
+          {["", "inapp", "email", "whatsapp", "push"].map((c) => (
             <button
               key={c}
-              onClick={() => setChannel(c)}
+              onClick={() => {
+                setChannel(c);
+                setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${
                 channel === c
                   ? "bg-blue-600 text-white"
@@ -111,6 +125,8 @@ export default function AdminNotificationsPage() {
           )}
         </div>
       )}
+
+      <Pagination page={page} pages={pages} total={total} onPageChange={setPage} />
     </div>
   );
 }

@@ -17,11 +17,12 @@ export default function EditProductPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/list`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products/list?limit=100`, {
       credentials: "include",
     })
       .then((res) => res.json())
-      .then((products) => {
+      .then((data) => {
+        const products = Array.isArray(data) ? data : data.data || [];
         const product = products.find((p: { _id: string }) => p._id === id);
         if (product) {
           setName(product.name);

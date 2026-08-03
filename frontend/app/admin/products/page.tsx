@@ -4,18 +4,28 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AdminProduct } from "@/app/types/admin";
 import { apiFetch } from "@/app/lib/api";
+import Pagination from "@/components/Pagination";
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<AdminProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState("all");
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       try {
-        const query = status === "all" ? "" : `?status=${status}`;
-        setProducts(await apiFetch(`/api/admin/products${query}`));
+        const query = new URLSearchParams();
+        if (status !== "all") query.set("status", status);
+        query.set("page", String(page));
+        query.set("limit", "20");
+        const data = await apiFetch(`/api/admin/products?${query}`);
+        setProducts(data.data || []);
+        setTotal(data.total || 0);
+        setPages(data.pages || 1);
       } catch {
         toast.error("Failed to load products");
       } finally {
@@ -23,20 +33,23 @@ export default function AdminProductsPage() {
       }
     };
     load();
-  }, [status]);
+  }, [status, page]);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">All Products</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{products.length} across all users</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{total} across all users</p>
         </div>
         <div className="flex gap-2">
           {["all", "active", "expired"].map((s) => (
             <button
               key={s}
-              onClick={() => setStatus(s)}
+              onClick={() => {
+                setStatus(s);
+                setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg text-sm font-medium capitalize transition-colors ${
                 status === s
                   ? "bg-blue-600 text-white"
@@ -105,6 +118,8 @@ export default function AdminProductsPage() {
           </table>
         </div>
       )}
+
+      <Pagination page={page} pages={pages} total={total} onPageChange={setPage} />
     </div>
   );
 }

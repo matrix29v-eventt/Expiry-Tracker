@@ -33,7 +33,7 @@ export default function DashboardClient() {
   const fetchProducts = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/products/list`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/list?limit=100`,
         { credentials: "include" }
       );
 
@@ -45,6 +45,8 @@ export default function DashboardClient() {
 
       if (Array.isArray(data)) {
         setProducts(data);
+      } else if (data && Array.isArray(data.data)) {
+        setProducts(data.data);
       } else {
         setProducts([]);
         console.error("Unexpected API response:", data);

@@ -1,28 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { AdminUser } from "@/app/types/admin";
 import { apiFetch } from "@/app/lib/api";
+import Pagination from "@/components/Pagination";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  const load = async () => {
+  const load = useCallback(async (p: number) => {
     try {
-      setUsers(await apiFetch("/api/admin/users"));
+      const data = await apiFetch(`/api/admin/users?page=${p}&limit=20`);
+      setUsers(data.data || []);
+      setTotal(data.total || 0);
+      setPage(data.page || p);
+      setPages(data.pages || 1);
     } catch {
       toast.error("Failed to load users");
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    load();
-  }, []);
+    load(1);
+  }, [load]);
 
   const changeRole = async (user: AdminUser, role: "user" | "admin") => {
     try {
@@ -31,7 +39,7 @@ export default function AdminUsersPage() {
         body: JSON.stringify({ role }),
       });
       toast.success(`${user.name} is now ${role}`);
-      load();
+      load(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update role");
     }
@@ -42,7 +50,7 @@ export default function AdminUsersPage() {
     try {
       await apiFetch(`/api/admin/users/${user.id}`, { method: "DELETE" });
       toast.success("User deleted");
-      load();
+      load(page);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to delete user");
     }
@@ -69,7 +77,7 @@ export default function AdminUsersPage() {
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Users</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{users.length} registered</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{total} registered</p>
         </div>
         <input
           type="text"
@@ -143,6 +151,8 @@ export default function AdminUsersPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination page={page} pages={pages} total={total} onPageChange={load} />
     </div>
   );
 }

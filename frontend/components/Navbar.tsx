@@ -34,12 +34,13 @@ export default function Navbar() {
               setRole(data.role || "user");
             })
             .catch(() => {});
-          apiFetch("/api/notifications")
+          apiFetch("/api/notifications?limit=50")
             .then((data) => {
               if (cancelled) return;
-              if (Array.isArray(data)) {
-                setUnreadCount(data.filter((n) => !n.isRead).length);
-              }
+              const list = (Array.isArray(data) ? data : data.data || []) as Array<{
+                isRead?: boolean;
+              }>;
+              setUnreadCount(list.filter((n) => !n.isRead).length);
             })
             .catch(() => {});
         }

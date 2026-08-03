@@ -60,26 +60,25 @@ export default function Notifications() {
     const fetchNotifications = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/notifications`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/notifications?limit=50`,
           { credentials: "include" }
         );
 
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data)) {
-            const newCount = data.length;
-            if (previousCountRef.current > 0 && newCount > previousCountRef.current) {
-              const newNotifications = data.slice(0, newCount - previousCountRef.current);
-              newNotifications.forEach((n: Notification) => {
-                showToast(n);
-                if (permissionGranted) {
-                  sendBrowserNotification(n.message);
-                }
-              });
-            }
-            previousCountRef.current = newCount;
-            setNotifications(data);
+          const list = Array.isArray(data) ? data : data.data || [];
+          const newCount = list.length;
+          if (previousCountRef.current > 0 && newCount > previousCountRef.current) {
+            const newNotifications = list.slice(0, newCount - previousCountRef.current);
+            newNotifications.forEach((n: Notification) => {
+              showToast(n);
+              if (permissionGranted) {
+                sendBrowserNotification(n.message);
+              }
+            });
           }
+          previousCountRef.current = newCount;
+          setNotifications(list);
         }
       } catch {
         // Silently fail

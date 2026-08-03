@@ -17,7 +17,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/products/list`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/products/list?limit=100`,
         {
           credentials: "include", // 🔴 JWT cookie
         }
@@ -27,6 +27,8 @@ export default function ProductsPage() {
 
       if (Array.isArray(data)) {
         setProducts(data);
+      } else if (data && Array.isArray(data.data)) {
+        setProducts(data.data);
       } else {
         setProducts([]);
       }
