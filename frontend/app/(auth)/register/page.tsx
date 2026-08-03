@@ -90,10 +90,10 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Account created successfully! Redirecting to login...");
+      setSuccess("Account created! We sent a verification email — please verify your email before logging in. Redirecting to login...");
       setTimeout(() => {
         router.push("/login?new=1");
-      }, 2000);
+      }, 2500);
     } catch {
       setError("Network error. Please try again.");
     } finally {

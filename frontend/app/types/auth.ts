@@ -20,6 +20,11 @@ export interface NotificationPreferences {
   whatsapp: boolean;
 }
 
+export interface ReminderPreferences {
+  warningDays: number;
+  notifyOnExpiryDay: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -28,6 +33,8 @@ export interface User {
   phone?: string;
   countryCode?: string;
   notificationPreferences?: NotificationPreferences;
+  reminderPreferences?: ReminderPreferences;
+  isVerified?: boolean;
   productCount?: number;
   createdAt?: string;
 }

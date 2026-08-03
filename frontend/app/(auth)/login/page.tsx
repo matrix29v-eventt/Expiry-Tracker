@@ -10,6 +10,9 @@ export default function LoginPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resentMsg, setResentMsg] = useState("");
 
   const [form, setForm] = useState<LoginForm>({
     email: "",
@@ -21,6 +24,8 @@ export default function LoginPage() {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
+    setNeedsVerification(false);
+    setResentMsg("");
     
     // Validate password when it changes
     if (e.target.name === 'password') {
@@ -67,6 +72,9 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data.message || "Login failed");
+        if (data.needsVerification) {
+          setNeedsVerification(true);
+        }
         return;
       }
 
@@ -79,6 +87,28 @@ export default function LoginPage() {
       setError("Network error. Please try again.");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResending(true);
+    setResentMsg("");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/auth/resend-verification`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.message || "Failed to resend verification email");
+        return;
+      }
+      setResentMsg(data.message || "Verification email sent. Check your inbox.");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -117,6 +147,24 @@ export default function LoginPage() {
                   </svg>
                   {error}
                 </p>
+              </div>
+            )}
+
+            {needsVerification && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/50 rounded-xl mb-6 glass">
+                <p className="text-sm text-blue-700 dark:text-blue-300 font-semibold mb-3">
+                  We sent a verification link when you signed up. Resend it to activate your account.
+                </p>
+                <button
+                  onClick={handleResendVerification}
+                  disabled={resending}
+                  className="w-full px-4 py-2.5 rounded-lg text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
+                >
+                  {resending ? "Sending..." : "Resend verification email"}
+                </button>
+                {resentMsg && (
+                  <p className="mt-2 text-sm text-green-700 dark:text-green-300 font-medium">{resentMsg}</p>
+                )}
               </div>
             )}
 
@@ -199,9 +247,9 @@ export default function LoginPage() {
                 </div>
 
                 <div className="text-sm">
-                  <a href="#" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
+                  <Link href="/forgot-password" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
                     Forgot password?
-                  </a>
+                  </Link>
                 </div>
               </div>
 
