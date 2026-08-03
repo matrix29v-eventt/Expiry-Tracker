@@ -7,6 +7,17 @@ import toast from "react-hot-toast";
 import { User } from "@/app/types/auth";
 import { apiFetch } from "@/app/lib/api";
 
+const urlBase64ToUint8Array = (base64String: string) => {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+};
+
 export default function SettingsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -18,6 +29,13 @@ export default function SettingsPage() {
   const [countryCode, setCountryCode] = useState("91");
   const [prefEmail, setPrefEmail] = useState(true);
   const [prefWhatsApp, setPrefWhatsApp] = useState(false);
+  const [warningDays, setWarningDays] = useState(7);
+  const [notifyOnExpiryDay, setNotifyOnExpiryDay] = useState(true);
+
+  const [pushSupported, setPushSupported] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
+  const [pushError, setPushError] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -29,6 +47,8 @@ export default function SettingsPage() {
         setCountryCode(data.countryCode || "91");
         setPrefEmail(data.notificationPreferences?.email ?? true);
         setPrefWhatsApp(data.notificationPreferences?.whatsapp ?? false);
+        setWarningDays(data.reminderPreferences?.warningDays ?? 7);
+        setNotifyOnExpiryDay(data.reminderPreferences?.notifyOnExpiryDay ?? true);
       } catch {
         router.push("/login");
       } finally {
@@ -37,6 +57,23 @@ export default function SettingsPage() {
     };
     load();
   }, [router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      return;
+    }
+    setPushSupported(true);
+    navigator.serviceWorker
+      .getRegistration("/sw.js")
+      .then((reg) => {
+        if (!reg) return;
+        return reg.pushManager.getSubscription();
+      })
+      .then((sub) => {
+        if (sub) setPushEnabled(true);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -61,6 +98,7 @@ export default function SettingsPage() {
           phone,
           countryCode,
           notificationPreferences: { email: prefEmail, whatsapp: prefWhatsApp },
+          reminderPreferences: { warningDays, notifyOnExpiryDay },
         }),
       });
       toast.success("Settings saved");
@@ -68,6 +106,65 @@ export default function SettingsPage() {
       toast.error(error instanceof Error ? error.message : "Failed to save");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleEnablePush = async () => {
+    if (!pushSupported) return;
+    setPushBusy(true);
+    setPushError("");
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        setPushError("Notification permission denied");
+        return;
+      }
+
+      const reg = await navigator.serviceWorker.register("/sw.js");
+      const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+      if (!publicKey) {
+        setPushError("VAPID public key not configured");
+        return;
+      }
+
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+
+      await apiFetch("/api/push/subscribe", {
+        method: "POST",
+        body: JSON.stringify(subscription),
+      });
+
+      setPushEnabled(true);
+      toast.success("Push notifications enabled");
+    } catch (error) {
+      setPushError(error instanceof Error ? error.message : "Failed to enable push");
+    } finally {
+      setPushBusy(false);
+    }
+  };
+
+  const handleDisablePush = async () => {
+    setPushBusy(true);
+    setPushError("");
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const subscription = await reg.pushManager.getSubscription();
+      if (subscription) {
+        await apiFetch("/api/push/unsubscribe", {
+          method: "DELETE",
+          body: JSON.stringify({ endpoint: subscription.endpoint }),
+        });
+        await subscription.unsubscribe();
+      }
+      setPushEnabled(false);
+      toast.success("Push notifications disabled");
+    } catch (error) {
+      setPushError(error instanceof Error ? error.message : "Failed to disable push");
+    } finally {
+      setPushBusy(false);
     }
   };
 
@@ -189,6 +286,81 @@ export default function SettingsPage() {
               />
             </label>
           </div>
+        </section>
+
+        {/* Reminder schedule */}
+        <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Reminder Schedule</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Choose how early you want to be warned before a product expires.
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="warningDays" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Warn me before expiry
+              </label>
+              <select
+                id="warningDays"
+                value={warningDays}
+                onChange={(e) => setWarningDays(Number(e.target.value))}
+                className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                {[1, 3, 7, 14, 30].map((days) => (
+                  <option key={days} value={days}>
+                    {days} day{days !== 1 ? "s" : ""} before
+                  </option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center justify-between gap-4 p-4 rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors sm:self-end">
+              <div>
+                <div className="font-medium text-gray-900 dark:text-white">Notify on expiry day</div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Email / WhatsApp / push on the day itself</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={notifyOnExpiryDay}
+                onChange={(e) => setNotifyOnExpiryDay(e.target.checked)}
+                className="h-5 w-5 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
+              />
+            </label>
+          </div>
+        </section>
+
+        {/* Browser push */}
+        <section className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Browser Notifications</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Get alerts right in your browser, even when the app is closed.
+          </p>
+
+          {pushSupported ? (
+            <div>
+              {pushEnabled ? (
+                <button
+                  onClick={handleDisablePush}
+                  disabled={pushBusy}
+                  className="inline-flex items-center px-4 py-2.5 rounded-lg border border-red-200 dark:border-red-900/50 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                >
+                  {pushBusy ? "Working..." : "Disable browser notifications"}
+                </button>
+              ) : (
+                <button
+                  onClick={handleEnablePush}
+                  disabled={pushBusy}
+                  className="inline-flex items-center px-4 py-2.5 rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-sm font-semibold shadow-sm disabled:opacity-50"
+                >
+                  {pushBusy ? "Working..." : "Enable browser notifications"}
+                </button>
+              )}
+              {pushError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{pushError}</p>}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Your browser doesn&apos;t support web push notifications.
+            </p>
+          )}
         </section>
 
         <div className="flex justify-end">
