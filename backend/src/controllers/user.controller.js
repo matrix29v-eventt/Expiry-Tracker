@@ -9,6 +9,8 @@ const publicUser = (user) => ({
   phone: user.phone || "",
   countryCode: user.countryCode || "91",
   notificationPreferences: user.notificationPreferences || { email: true, whatsapp: false },
+  reminderPreferences: user.reminderPreferences || { warningDays: 7, notifyOnExpiryDay: true },
+  isVerified: user.isVerified,
   createdAt: user.createdAt,
 });
 
@@ -27,7 +29,7 @@ export const getMe = async (req, res) => {
 
 export const updateMe = async (req, res) => {
   try {
-    const { name, phone, countryCode, notificationPreferences } = req.body;
+    const { name, phone, countryCode, notificationPreferences, reminderPreferences } = req.body;
 
     const update = {};
     if (typeof name === "string" && name.trim()) update.name = name.trim();
@@ -40,6 +42,16 @@ export const updateMe = async (req, res) => {
       if (typeof email === "boolean") prefs.email = email;
       if (typeof whatsapp === "boolean") prefs.whatsapp = whatsapp;
       update.notificationPreferences = prefs;
+    }
+
+    if (reminderPreferences && typeof reminderPreferences === "object") {
+      const { warningDays, notifyOnExpiryDay } = reminderPreferences;
+      const prefs = {};
+      if (Number.isInteger(warningDays) && warningDays >= 1 && warningDays <= 30) {
+        prefs.warningDays = warningDays;
+      }
+      if (typeof notifyOnExpiryDay === "boolean") prefs.notifyOnExpiryDay = notifyOnExpiryDay;
+      update.reminderPreferences = prefs;
     }
 
     const user = await User.findByIdAndUpdate(req.userId, update, {

@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import { deliverExpiryNotification } from "../services/notification.service.js";
 
 const THREE_HOURS = 3 * 60 * 60 * 1000;
+const MAX_WARNING_DAYS = 30; // matches reminderPreferences.warningDays max
 
 const startOfToday = () => {
   const date = new Date();
@@ -23,18 +24,27 @@ export const startExpiryChecker = () => {
     console.log("🔔 Running expiry checker (every 3 hours)...");
 
     const now = new Date();
-    const warningDate = new Date();
-    warningDate.setDate(now.getDate() + 7);
+    const maxWarningWindow = new Date();
+    maxWarningWindow.setDate(now.getDate() + MAX_WARNING_DAYS);
 
     const products = await Product.find({
       isExpired: false,
-      expiryDate: { $lte: warningDate },
+      expiryDate: { $lte: maxWarningWindow },
     });
 
     for (const product of products) {
+      const user = await User.findById(product.user);
+
+      // Per-user reminder schedule.
+      const warningDays = user?.reminderPreferences?.warningDays ?? 7;
+      const notifyOnExpiryDay = user?.reminderPreferences?.notifyOnExpiryDay ?? true;
+
       const isAlreadyExpired = product.expiryDate < startOfToday();
       const expiringToday =
         product.expiryDate >= startOfToday() && product.expiryDate <= endOfToday();
+      const daysLeft = Math.ceil(
+        (product.expiryDate - now) / (1000 * 60 * 60 * 24)
+      );
 
       let message;
       let notificationType;
@@ -46,9 +56,6 @@ export const startExpiryChecker = () => {
         message = `⚠️ ${product.name} expires today`;
         notificationType = "expiry";
       } else {
-        const daysLeft = Math.ceil(
-          (product.expiryDate - now) / (1000 * 60 * 60 * 24)
-        );
         message = `⚠️ ${product.name} will expire in ${daysLeft} day${daysLeft === 1 ? "" : "s"}`;
         notificationType = "warning";
       }
@@ -71,7 +78,11 @@ export const startExpiryChecker = () => {
         }
       }
 
-      if (shouldNotify) {
+      // Only create the in-app warning once we're inside the user's window.
+      const insideWarningWindow =
+        expiringToday || isAlreadyExpired || daysLeft <= warningDays;
+
+      if (shouldNotify && insideWarningWindow) {
         await Notification.create({
           user: product.user,
           product: product._id,
@@ -85,12 +96,13 @@ export const startExpiryChecker = () => {
         console.log("🔔 In-app notification created:", message);
       }
 
-      /* ----- Single day-of-expiry delivery (email / WhatsApp) ----- */
-      const shouldDeliverExternally = (expiringToday || isAlreadyExpired) && !product.expiryNotificationSent;
+      /* ----- Single day-of-expiry delivery (email / WhatsApp / push) ----- */
+      const shouldDeliverExternally =
+        (expiringToday || isAlreadyExpired) &&
+        notifyOnExpiryDay &&
+        !product.expiryNotificationSent;
 
       if (shouldDeliverExternally) {
-        const user = await User.findById(product.user);
-
         if (user) {
           const results = await deliverExpiryNotification({
             user,
