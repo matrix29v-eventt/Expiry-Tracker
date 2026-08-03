@@ -94,6 +94,13 @@ export default function Navbar() {
                 Products
               </Link>
 
+              <Link
+                href="/lists"
+                className="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"
+              >
+                Lists
+              </Link>
+
               {isLoggedIn && (
                 <Link
                   href="/settings"

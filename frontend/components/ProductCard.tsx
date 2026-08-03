@@ -87,11 +87,13 @@ export default function ProductCard({
   onDelete,
   onMarkExpired,
   onEdit,
+  readOnly = false,
 }: {
   product: Product;
   onDelete: (id: string) => void;
   onMarkExpired?: (id: string) => void;
   onEdit?: (id: string) => void;
+  readOnly?: boolean;
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -223,11 +225,13 @@ export default function ProductCard({
             </div>
           </div>
 
-          <QuickActions
-            onDelete={() => onDelete(product._id)}
-            onMarkExpired={() => onMarkExpired?.(product._id)}
-            onEdit={() => onEdit?.(product._id)}
-          />
+          {!readOnly && (
+            <QuickActions
+              onDelete={() => onDelete(product._id)}
+              onMarkExpired={() => onMarkExpired?.(product._id)}
+              onEdit={() => onEdit?.(product._id)}
+            />
+          )}
         </div>
       </div>
       </div>
