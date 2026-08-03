@@ -16,8 +16,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || "ExpiryTracker", {
       body: data.body || "",
-      icon: "/favicon.ico",
-      badge: "/favicon.ico",
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
       data: { url: data.url || "/dashboard" },
     })
   );

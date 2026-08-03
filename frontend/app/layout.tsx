@@ -2,6 +2,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DarkModeInitializer from "@/components/DarkModeInitializer";
+import PWAInstallPrompt from "@/components/PWAInstallPrompt";
 import { Toaster } from "react-hot-toast";
 import { Inter } from "next/font/google";
 
@@ -40,6 +41,8 @@ export default function RootLayout({
         <main className="flex-grow p-4 bg-gray-50 dark:bg-slate-900">{children}</main>
 
         <Footer />
+
+        <PWAInstallPrompt />
       </body>
     </html>
   );
