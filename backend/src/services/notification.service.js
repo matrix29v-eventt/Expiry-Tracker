@@ -1,5 +1,6 @@
 import Notification from "../models/Notification.js";
 import { sendEmail } from "./email.service.js";
+import { sendPushNotification } from "./push.service.js";
 
 /* ------------------------------------------------------------------ */
 /*  Email (Gmail app password via SMTP)                                 */
@@ -140,6 +141,7 @@ export const userChannels = (user) => {
   if (prefs.whatsapp && user.phone) {
     if (normalizePhone(user.phone, user.countryCode)) channels.push("whatsapp");
   }
+  if (user.pushSubscriptions && user.pushSubscriptions.length > 0) channels.push("push");
 
   return channels;
 };
@@ -157,6 +159,7 @@ export const deliverExpiryNotification = async ({ user, product, message }) => {
 
   const results = [];
   const waNumber = normalizePhone(user.phone, user.countryCode);
+  const dashboardUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard`;
 
   for (const channel of channels) {
     let result;
@@ -168,11 +171,20 @@ export const deliverExpiryNotification = async ({ user, product, message }) => {
         expiryDate: product.expiryDate,
         category: product.category,
       });
-    } else {
+    } else if (channel === "whatsapp") {
       result = await sendExpiryWhatsApp({
         to: waNumber,
         productName: product.name,
         expiryDate: product.expiryDate,
+      });
+    } else {
+      result = await sendPushNotification({
+        user,
+        title: message,
+        body: product.category
+          ? `Category: ${product.category}. Tap to open ExpiryTracker.`
+          : "Tap to open ExpiryTracker.",
+        url: dashboardUrl,
       });
     }
 

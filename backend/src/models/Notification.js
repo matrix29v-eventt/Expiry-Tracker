@@ -22,7 +22,7 @@ const notificationSchema = new mongoose.Schema(
     },
     channel: {
       type: String,
-      enum: ["inapp", "email", "whatsapp"],
+      enum: ["inapp", "email", "whatsapp", "push"],
       default: "inapp",
     },
     deliveredAt: {
