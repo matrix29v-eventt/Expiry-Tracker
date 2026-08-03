@@ -3,12 +3,41 @@ import Product from "../models/Product.js";
 import History from "../models/History.js";
 import { protect } from "../middleware/auth.middleware.js";
 import { getPagination, paginateResponse } from "../utils/pagination.js";
+import { startOfToday, addDays } from "../utils/expiryLogic.js";
 
 const router = express.Router();
+
+/* Max products a single user can track (overridable via MAX_PRODUCTS env) */
+const MAX_PRODUCTS = parseInt(process.env.MAX_PRODUCTS, 10) || 500;
+
+const productCount = (userId) => Product.countDocuments({ user: userId });
+
+const getWeekRange = (week) => {
+  const start = startOfToday();
+  const end = addDays(start, 6);
+  end.setHours(23, 59, 59, 999);
+
+  if (week === "next") {
+    start.setDate(start.getDate() + 7);
+    end.setDate(end.getDate() + 7);
+  } else if (week === "last") {
+    start.setDate(start.getDate() - 7);
+    end.setDate(end.getDate() - 7);
+  }
+
+  return { start, end };
+};
 
 /* ADD PRODUCT */
 router.post("/add", protect, async (req, res) => {
   try {
+    const count = await productCount(req.userId);
+    if (count >= MAX_PRODUCTS) {
+      return res
+        .status(400)
+        .json({ message: `Product limit reached (${MAX_PRODUCTS}). Delete some products to add more.` });
+    }
+
     const product = await Product.create({
       ...req.body,
       user: req.userId,
@@ -119,19 +148,55 @@ router.put("/:id", protect, async (req, res) => {
   }
 });
 
-/* EXPORT PRODUCTS AS CSV */
+/* EXPORT PRODUCTS AS CSV (filters: status, week, from, to) */
 router.get("/export", protect, async (req, res) => {
   try {
-    const products = await Product.find({ user: req.userId });
-    
-    const csvHeader = "Name,Category,Expiry Date,Expired,Created At\n";
-    const csvRows = products.map(p => {
-      const expiryDate = new Date(p.expiryDate).toLocaleDateString();
-      const createdAt = new Date(p.createdAt).toLocaleDateString();
-      return `"${p.name}","${p.category || ''}","${expiryDate}","${p.isExpired ? 'Yes' : 'No'}","${createdAt}"`;
+    const { status, week, from, to } = req.query;
+
+    const conditions = [];
+
+    if (status === "expired") {
+      conditions.push({ expiryDate: { $lt: startOfToday() } });
+    } else if (status === "expiring") {
+      conditions.push({ expiryDate: { $gte: startOfToday(), $lte: addDays(startOfToday(), 30) } });
+    } else if (status === "active") {
+      conditions.push({ expiryDate: { $gte: startOfToday() } });
+    }
+
+    if (week && ["this", "next", "last"].includes(week)) {
+      const { start, end } = getWeekRange(week);
+      conditions.push({ expiryDate: { $gte: start, $lte: end } });
+    }
+
+    if (from) conditions.push({ expiryDate: { $gte: new Date(`${from}T00:00:00.000`) } });
+    if (to) conditions.push({ expiryDate: { $lte: new Date(`${to}T23:59:59.999`) } });
+
+    const filter = { user: req.userId };
+    if (conditions.length === 1) Object.assign(filter, conditions[0]);
+    else if (conditions.length > 1) filter.$and = conditions;
+
+    const products = await Product.find(filter).sort({ expiryDate: 1 });
+
+    const csvEscape = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+    const csvHeader = "Name,Category,Expiry Date,Status,Days Left,Created At\n";
+    const today = startOfToday();
+    const csvRows = products.map((p) => {
+      const expiryDate = new Date(p.expiryDate).toISOString().slice(0, 10);
+      const createdAt = new Date(p.createdAt).toISOString().slice(0, 10);
+      const daysLeft = Math.ceil((new Date(p.expiryDate) - today) / (1000 * 60 * 60 * 24));
+      const status = daysLeft < 0 ? "Expired" : daysLeft <= 3 ? "Expiring Soon" : "Active";
+      return [
+        csvEscape(p.name),
+        csvEscape(p.category || ""),
+        csvEscape(expiryDate),
+        csvEscape(status),
+        csvEscape(daysLeft),
+        csvEscape(createdAt),
+      ].join(",");
     }).join("\n");
 
-    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", "attachment; filename=products.csv");
     res.send(csvHeader + csvRows);
   } catch (error) {
@@ -146,6 +211,14 @@ router.post("/import", protect, async (req, res) => {
     
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: "No products provided" });
+    }
+
+    const count = await productCount(req.userId);
+    const available = MAX_PRODUCTS - count;
+    if (products.length > available) {
+      return res.status(400).json({
+        message: `Import would exceed the ${MAX_PRODUCTS} product limit (${available} slot${available !== 1 ? "s" : ""} available).`,
+      });
     }
 
     const productsToCreate = products.map(p => ({
@@ -197,6 +270,12 @@ router.post("/restore", protect, async (req, res) => {
     
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: "Invalid backup data" });
+    }
+
+    if (products.length > MAX_PRODUCTS) {
+      return res.status(400).json({
+        message: `Backup contains more than the ${MAX_PRODUCTS} product limit.`,
+      });
     }
 
     // Delete existing products

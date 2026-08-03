@@ -16,6 +16,12 @@ export const daysUntil = (expiryDate, now = new Date()) => {
   return Math.ceil((new Date(expiryDate) - new Date(now)) / DAY);
 };
 
+export const addDays = (date, days) => {
+  const d = new Date(date);
+  d.setDate(d.getDate() + days);
+  return d;
+};
+
 /**
  * Classifies an expiry date relative to "now".
  * Returns "expired", "expiringToday" or "upcoming".
