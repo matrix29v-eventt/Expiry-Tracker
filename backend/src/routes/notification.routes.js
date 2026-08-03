@@ -13,9 +13,16 @@ router.get("/", protect, async (req, res) => {
 });
 
 router.post("/:id/read", protect, async (req, res) => {
-  await Notification.findByIdAndUpdate(req.params.id, {
-    isRead: true,
-  });
+  const notification = await Notification.findOneAndUpdate(
+    { _id: req.params.id, user: req.userId },
+    { isRead: true },
+    { new: true }
+  );
+
+  if (!notification) {
+    return res.status(404).json({ message: "Notification not found" });
+  }
+
   res.json({ success: true });
 });
 

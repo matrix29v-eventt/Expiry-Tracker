@@ -16,6 +16,10 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    expiryNotificationSent: {
+      type: Boolean,
+      default: false,
+    },
     list: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "List",

@@ -9,6 +9,8 @@ import ocrRoutes from "./routes/ocr.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import listRoutes from "./routes/list.routes.js";
 import historyRoutes from "./routes/history.routes.js";
+import userRoutes from "./routes/user.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 import path from "path";
 
 const app = express(); // ✅ APP MUST COME FIRST
@@ -34,6 +36,8 @@ app.use("/api/ocr", ocrRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/lists", listRoutes);
 app.use("/api/history", historyRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ✅ Health check (optional)
 app.get("/", (req, res) => {

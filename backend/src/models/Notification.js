@@ -15,6 +15,24 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    type: {
+      type: String,
+      enum: ["info", "warning", "error", "expiry"],
+      default: "info",
+    },
+    channel: {
+      type: String,
+      enum: ["inapp", "email", "whatsapp"],
+      default: "inapp",
+    },
+    deliveredAt: {
+      type: Date,
+    },
+    deliveryStatus: {
+      type: String,
+      enum: ["pending", "sent", "failed", "skipped"],
+      default: "pending",
+    },
     isRead: {
       type: Boolean,
       default: false,
@@ -22,5 +40,7 @@ const notificationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+notificationSchema.index({ user: 1, product: 1, channel: 1 });
 
 export default mongoose.model("Notification", notificationSchema);

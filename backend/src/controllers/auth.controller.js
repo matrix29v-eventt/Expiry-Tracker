@@ -2,9 +2,24 @@ import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const createToken = (userId) => {
+const getAdminEmails = () =>
+  (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+
+/* Promote user to admin if their email is in ADMIN_EMAILS */
+const syncRole = async (user) => {
+  if (getAdminEmails().includes(user.email) && user.role !== "admin") {
+    user.role = "admin";
+    await user.save();
+  }
+  return user;
+};
+
+const createToken = (user) => {
   return jwt.sign(
-    { id: userId },
+    { id: user._id, role: user.role },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
@@ -12,9 +27,8 @@ const createToken = (userId) => {
 
 /* REGISTER */
 export const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone, countryCode, notificationPreferences } = req.body;
 
-  // Validation
   if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
@@ -35,7 +49,16 @@ export const registerUser = async (req, res) => {
   if (exists) return res.status(400).json({ message: "User already exists" });
 
   const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hashedPassword });
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+    phone: phone || "",
+    countryCode: countryCode || "91",
+    notificationPreferences: notificationPreferences || { email: true, whatsapp: false },
+  });
+
+  await syncRole(user);
 
   res.status(201).json({ message: "Registration successful" });
 };
@@ -54,7 +77,6 @@ export const logoutUser = (req, res) => {
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  // Validation
   if (!email || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
@@ -73,7 +95,9 @@ export const loginUser = async (req, res) => {
   const match = await bcrypt.compare(password, user.password);
   if (!match) return res.status(401).json({ message: "Invalid credentials" });
 
-  const token = createToken(user._id);
+  await syncRole(user);
+
+  const token = createToken(user);
 
   res.cookie("token", token, {
     httpOnly: true,
@@ -82,5 +106,13 @@ export const loginUser = async (req, res) => {
     maxAge: 7 * 24 * 60 * 60 * 1000
   });
 
-  res.json({ message: "Login successful" });
+  res.json({
+    message: "Login successful",
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  });
 };

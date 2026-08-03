@@ -1,8 +1,22 @@
 import cron from "node-cron";
 import Product from "../models/Product.js";
 import Notification from "../models/Notification.js";
+import User from "../models/User.js";
+import { deliverExpiryNotification } from "../services/notification.service.js";
 
 const THREE_HOURS = 3 * 60 * 60 * 1000;
+
+const startOfToday = () => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const endOfToday = () => {
+  const date = new Date();
+  date.setHours(23, 59, 59, 999);
+  return date;
+};
 
 export const startExpiryChecker = () => {
   cron.schedule("0 */3 * * *", async () => {
@@ -18,13 +32,19 @@ export const startExpiryChecker = () => {
     });
 
     for (const product of products) {
-      const isAlreadyExpired = product.expiryDate < now;
+      const isAlreadyExpired = product.expiryDate < startOfToday();
+      const expiringToday =
+        product.expiryDate >= startOfToday() && product.expiryDate <= endOfToday();
+
       let message;
       let notificationType;
 
       if (isAlreadyExpired) {
         message = `❌ ${product.name} has expired`;
-        notificationType = "expired";
+        notificationType = "error";
+      } else if (expiringToday) {
+        message = `⚠️ ${product.name} expires today`;
+        notificationType = "expiry";
       } else {
         const daysLeft = Math.ceil(
           (product.expiryDate - now) / (1000 * 60 * 60 * 24)
@@ -36,6 +56,7 @@ export const startExpiryChecker = () => {
       const lastNotification = await Notification.findOne({
         user: product.user,
         product: product._id,
+        channel: "inapp",
       })
         .sort({ createdAt: -1 })
         .limit(1);
@@ -55,10 +76,37 @@ export const startExpiryChecker = () => {
           user: product.user,
           product: product._id,
           message,
-          type: isAlreadyExpired ? "error" : "warning",
+          type: notificationType,
+          channel: "inapp",
+          deliveryStatus: "sent",
+          deliveredAt: now,
         });
 
-        console.log("🔔 Notification created:", message);
+        console.log("🔔 In-app notification created:", message);
+      }
+
+      /* ----- Single day-of-expiry delivery (email / WhatsApp) ----- */
+      const shouldDeliverExternally = (expiringToday || isAlreadyExpired) && !product.expiryNotificationSent;
+
+      if (shouldDeliverExternally) {
+        const user = await User.findById(product.user);
+
+        if (user) {
+          const results = await deliverExpiryNotification({
+            user,
+            product,
+            message: `📦 ${product.name} ${isAlreadyExpired ? "has expired" : "expires today"}`,
+          });
+
+          for (const result of results) {
+            console.log(
+              `📤 ${result.channel} delivery ${result.ok ? "sent" : "failed"} for "${product.name}": ${result.error || "ok"}`
+            );
+          }
+        }
+
+        product.expiryNotificationSent = true;
+        await product.save();
       }
 
       if (isAlreadyExpired && !product.isExpired) {
