@@ -12,6 +12,12 @@ const productSchema = new mongoose.Schema(
     },
     category: String,
     imageUrl: String,
+    quantity: {
+      type: Number,
+      default: 1,
+      min: 1,
+    },
+    unit: String,
     isExpired: {
       type: Boolean,
       default: false,

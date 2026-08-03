@@ -179,16 +179,19 @@ router.get("/export", protect, async (req, res) => {
 
     const csvEscape = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
-    const csvHeader = "Name,Category,Expiry Date,Status,Days Left,Created At\n";
+    const csvHeader = "Name,Category,Quantity,Unit,Expiry Date,Status,Days Left,Created At\n";
     const today = startOfToday();
     const csvRows = products.map((p) => {
       const expiryDate = new Date(p.expiryDate).toISOString().slice(0, 10);
       const createdAt = new Date(p.createdAt).toISOString().slice(0, 10);
       const daysLeft = Math.ceil((new Date(p.expiryDate) - today) / (1000 * 60 * 60 * 24));
       const status = daysLeft < 0 ? "Expired" : daysLeft <= 3 ? "Expiring Soon" : "Active";
+      const quantity = p.quantity ? `${p.quantity}${p.unit ? ` ${p.unit}` : ""}` : "1";
       return [
         csvEscape(p.name),
         csvEscape(p.category || ""),
+        csvEscape(quantity),
+        csvEscape(p.unit || ""),
         csvEscape(expiryDate),
         csvEscape(status),
         csvEscape(daysLeft),
@@ -225,6 +228,8 @@ router.post("/import", protect, async (req, res) => {
       name: p.name,
       expiryDate: p.expiryDate,
       category: p.category || "",
+      quantity: p.quantity || 1,
+      unit: p.unit || "",
       user: req.userId,
     }));
 
@@ -250,6 +255,8 @@ router.get("/backup", protect, async (req, res) => {
         name: p.name,
         expiryDate: p.expiryDate,
         category: p.category,
+        quantity: p.quantity,
+        unit: p.unit,
         isExpired: p.isExpired,
         createdAt: p.createdAt,
       })),
@@ -286,6 +293,8 @@ router.post("/restore", protect, async (req, res) => {
       name: p.name,
       expiryDate: p.expiryDate,
       category: p.category || "",
+      quantity: p.quantity || 1,
+      unit: p.unit || "",
       isExpired: p.isExpired || false,
       user: req.userId,
     }));
