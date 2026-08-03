@@ -1,34 +1,9 @@
-import nodemailer from "nodemailer";
 import Notification from "../models/Notification.js";
-
-const EMAIL_FROM = process.env.EMAIL_FROM || process.env.SMTP_USER || "no-reply@expirytracker.app";
+import { sendEmail } from "./email.service.js";
 
 /* ------------------------------------------------------------------ */
 /*  Email (Gmail app password via SMTP)                                 */
 /* ------------------------------------------------------------------ */
-
-let transporter = null;
-
-const getTransporter = () => {
-  if (transporter) return transporter;
-
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-
-  if (!user || !pass) {
-    console.warn("[notification.service] SMTP not configured. Set SMTP_USER/SMTP_PASS to enable email.");
-    return null;
-  }
-
-  transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 465),
-    secure: process.env.SMTP_PORT === "465" || process.env.SMTP_SECURE === "true",
-    auth: { user, pass },
-  });
-
-  return transporter;
-};
 
 const buildEmailHtml = ({ productName, expiryDate, category }) => {
   const date = expiryDate
@@ -74,23 +49,11 @@ const buildEmailHtml = ({ productName, expiryDate, category }) => {
 };
 
 export const sendExpiryEmail = async ({ to, productName, expiryDate, category }) => {
-  const transport = getTransporter();
-  if (!transport) {
-    return { ok: false, error: "SMTP not configured" };
-  }
-
-  try {
-    await transport.sendMail({
-      from: `"ExpiryTracker" <${EMAIL_FROM}>`,
-      to,
-      subject: `⚠️ ${productName} expires today!`,
-      html: buildEmailHtml({ productName, expiryDate, category }),
-    });
-    return { ok: true };
-  } catch (error) {
-    console.error("[notification.service] Email send failed:", error.message);
-    return { ok: false, error: error.message };
-  }
+  return sendEmail({
+    to,
+    subject: `⚠️ ${productName} expires today!`,
+    html: buildEmailHtml({ productName, expiryDate, category }),
+  });
 };
 
 /* ------------------------------------------------------------------ */

@@ -1,6 +1,14 @@
+import crypto from "crypto";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import {
+  sendVerificationEmail,
+  sendResetPasswordEmail,
+} from "../services/email.service.js";
+
+const VERIFICATION_TOKEN_TTL = 24 * 60 * 60 * 1000; // 24h
+const RESET_TOKEN_TTL = 60 * 60 * 1000; // 1h
 
 const getAdminEmails = () =>
   (process.env.ADMIN_EMAILS || "")
@@ -49,6 +57,8 @@ export const registerUser = async (req, res) => {
   if (exists) return res.status(400).json({ message: "User already exists" });
 
   const hashedPassword = await bcrypt.hash(password, 10);
+  const verificationToken = crypto.randomBytes(32).toString("hex");
+
   const user = await User.create({
     name,
     email,
@@ -56,12 +66,125 @@ export const registerUser = async (req, res) => {
     phone: phone || "",
     countryCode: countryCode || "91",
     notificationPreferences: notificationPreferences || { email: true, whatsapp: false },
+    verificationToken,
+    verificationTokenExpires: Date.now() + VERIFICATION_TOKEN_TTL,
   });
 
   await syncRole(user);
 
-  res.status(201).json({ message: "Registration successful" });
+  const emailResult = await sendVerificationEmail({ to: user.email, token: verificationToken });
+  if (!emailResult.ok) {
+    console.warn("[auth] Verification email failed to send:", emailResult.error);
+  }
+
+  res.status(201).json({ message: "Registration successful. Please verify your email to log in." });
 };
+
+/* VERIFY EMAIL */
+export const verifyEmail = async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ message: "Verification token is required" });
+  }
+
+  const user = await User.findOne({ verificationToken: token });
+  if (!user) {
+    return res.status(400).json({ message: "Invalid or expired verification link" });
+  }
+
+  if (user.verificationTokenExpires && user.verificationTokenExpires < new Date()) {
+    return res.status(400).json({ message: "Verification link has expired. Please request a new one." });
+  }
+
+  user.isVerified = true;
+  user.verificationToken = undefined;
+  user.verificationTokenExpires = undefined;
+  await user.save();
+
+  res.json({ message: "Email verified successfully. You can now log in." });
+};
+
+/* RESEND VERIFICATION */
+export const resendVerification = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ message: "User not found" });
+  if (user.isVerified) {
+    return res.status(400).json({ message: "Email is already verified" });
+  }
+
+  const token = crypto.randomBytes(32).toString("hex");
+  user.verificationToken = token;
+  user.verificationTokenExpires = Date.now() + VERIFICATION_TOKEN_TTL;
+  await user.save();
+
+  const result = await sendVerificationEmail({ to: user.email, token });
+  if (!result.ok) {
+    return res.status(502).json({ message: "Failed to send verification email. Please try again later." });
+  }
+
+  res.json({ message: "Verification email sent. Check your inbox." });
+};
+
+/* FORGOT PASSWORD */
+export const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  const user = await User.findOne({ email });
+  if (user) {
+    const token = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = token;
+    user.resetPasswordExpires = Date.now() + RESET_TOKEN_TTL;
+    await user.save();
+
+    const result = await sendResetPasswordEmail({ to: user.email, token });
+    if (!result.ok) {
+      console.warn("[auth] Reset email failed to send:", result.error);
+    }
+  }
+
+  res.json({ message: "If that email is registered, a reset link has been sent." });
+};
+
+/* RESET PASSWORD */
+export const resetPassword = async (req, res) => {
+  const { token, password } = req.body;
+
+  if (!token || !password) {
+    return res.status(400).json({ message: "Token and new password are required" });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({ message: "Password must be at least 8 characters long" });
+  }
+
+  const user = await User.findOne({ resetPasswordToken: token });
+  if (!user) {
+    return res.status(400).json({ message: "Invalid or expired reset link" });
+  }
+
+  if (user.resetPasswordExpires && user.resetPasswordExpires < new Date()) {
+    return res.status(400).json({ message: "Reset link has expired. Please request a new one." });
+  }
+
+  user.password = await bcrypt.hash(password, 10);
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save();
+
+  res.json({ message: "Password reset successful. You can now log in." });
+};
+
 /* LOGOUT */
 export const logoutUser = (req, res) => {
   res.clearCookie("token", {
@@ -94,6 +217,20 @@ export const loginUser = async (req, res) => {
 
   const match = await bcrypt.compare(password, user.password);
   if (!match) return res.status(401).json({ message: "Invalid credentials" });
+
+  // Legacy accounts created before email verification existed have no
+  // verificationToken set, so auto-verify them on first successful login.
+  if (!user.isVerified && !user.verificationToken) {
+    user.isVerified = true;
+    await user.save();
+  }
+
+  if (!user.isVerified) {
+    return res.status(403).json({
+      message: "Please verify your email before logging in.",
+      needsVerification: true,
+    });
+  }
 
   await syncRole(user);
 
