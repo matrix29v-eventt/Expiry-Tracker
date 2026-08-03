@@ -27,6 +27,9 @@
 - ✅ OCR integration for automatic expiry detection
 - ✅ Professional product cards with expiry indicators
 - ✅ Dashboard with product listing
+- ✅ Configurable per-user product cap (`MAX_PRODUCTS`, default 500)
+- ✅ Filtered CSV export (by status, week presets, or custom date range)
+- ✅ Paginated product history and admin views
 
 #### **Docker Infrastructure**
 - ✅ Complete Docker setup with multi-stage builds
@@ -262,6 +265,9 @@ VAPID_SUBJECT=mailto:no-reply@expirytracker.app
 
 # Admin users (comma separated)
 ADMIN_EMAILS=admin@example.com
+
+# Max products per user (default 500)
+MAX_PRODUCTS=500
 ```
 
 And add the public VAPID key to `frontend/.env.local`:
