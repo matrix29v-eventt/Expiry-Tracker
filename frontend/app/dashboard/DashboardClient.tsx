@@ -287,10 +287,13 @@ export default function DashboardClient() {
 
       {/* Professional Dashboard Header */}
       <div className="mb-8">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Product Dashboard</h1>
-            <p className="text-slate-600 dark:text-slate-300">Manage and track your product expiry dates</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-1">
+              Dashboard
+            </p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Product Dashboard</h1>
+            <p className="text-slate-600 dark:text-slate-300 mt-1">Manage and track your product expiry dates</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
             {/* Search Bar */}
@@ -388,44 +391,47 @@ export default function DashboardClient() {
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                <svg className="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 p-6 text-white shadow-lg shadow-blue-600/20">
+            <div className="absolute -top-8 -right-8 w-28 h-28 bg-white/10 rounded-full"></div>
+            <div className="relative flex items-center">
+              <div className="flex-shrink-0 p-3 bg-white/15 rounded-xl backdrop-blur">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Products</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">{total}</p>
+                <p className="text-sm font-medium text-blue-100">Total Products</p>
+                <p className="text-3xl font-bold leading-tight">{total}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 bg-amber-100 dark:bg-amber-900/30 rounded-lg">
-                <svg className="h-6 w-6 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 p-6 text-white shadow-lg shadow-amber-500/20">
+            <div className="absolute -top-8 -right-8 w-28 h-28 bg-white/10 rounded-full"></div>
+            <div className="relative flex items-center">
+              <div className="flex-shrink-0 p-3 bg-white/15 rounded-xl backdrop-blur">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Expiring Soon</p>
-                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">{expiringSoon}</p>
+                <p className="text-sm font-medium text-amber-100">Expiring Soon</p>
+                <p className="text-3xl font-bold leading-tight">{expiringSoon}</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 p-3 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                <svg className="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 p-6 text-white shadow-lg shadow-red-500/20">
+            <div className="absolute -top-8 -right-8 w-28 h-28 bg-white/10 rounded-full"></div>
+            <div className="relative flex items-center">
+              <div className="flex-shrink-0 p-3 bg-white/15 rounded-xl backdrop-blur">
+                <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Expired</p>
-                <p className="text-2xl font-bold text-red-600 dark:text-red-400">{expired}</p>
+                <p className="text-sm font-medium text-red-100">Expired</p>
+                <p className="text-3xl font-bold leading-tight">{expired}</p>
               </div>
             </div>
           </div>
@@ -440,6 +446,9 @@ export default function DashboardClient() {
       {/* Products Section */}
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-0.5">
+            Inventory
+          </p>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Products</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             {filtered.length === 0 
