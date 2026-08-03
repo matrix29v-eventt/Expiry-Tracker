@@ -3,21 +3,10 @@ import Product from "../models/Product.js";
 import Notification from "../models/Notification.js";
 import User from "../models/User.js";
 import { deliverExpiryNotification } from "../services/notification.service.js";
+import { classifyExpiry, daysUntil } from "./expiryLogic.js";
 
 const THREE_HOURS = 3 * 60 * 60 * 1000;
 const MAX_WARNING_DAYS = 30; // matches reminderPreferences.warningDays max
-
-const startOfToday = () => {
-  const date = new Date();
-  date.setHours(0, 0, 0, 0);
-  return date;
-};
-
-const endOfToday = () => {
-  const date = new Date();
-  date.setHours(23, 59, 59, 999);
-  return date;
-};
 
 export const startExpiryChecker = () => {
   cron.schedule("0 */3 * * *", async () => {
@@ -39,12 +28,10 @@ export const startExpiryChecker = () => {
       const warningDays = user?.reminderPreferences?.warningDays ?? 7;
       const notifyOnExpiryDay = user?.reminderPreferences?.notifyOnExpiryDay ?? true;
 
-      const isAlreadyExpired = product.expiryDate < startOfToday();
-      const expiringToday =
-        product.expiryDate >= startOfToday() && product.expiryDate <= endOfToday();
-      const daysLeft = Math.ceil(
-        (product.expiryDate - now) / (1000 * 60 * 60 * 24)
-      );
+      const status = classifyExpiry(product.expiryDate, now);
+      const isAlreadyExpired = status === "expired";
+      const expiringToday = status === "expiringToday";
+      const daysLeft = daysUntil(product.expiryDate, now);
 
       let message;
       let notificationType;
