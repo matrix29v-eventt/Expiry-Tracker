@@ -6,8 +6,10 @@ import mongoose from "mongoose";
 
 const PORT = process.env.PORT || 5000;
 import { startExpiryChecker } from "./utils/expiryChecker.js";
+import { startWeeklyDigest } from "./utils/weeklyDigest.js";
 
 startExpiryChecker();
+startWeeklyDigest();
 
 
 mongoose

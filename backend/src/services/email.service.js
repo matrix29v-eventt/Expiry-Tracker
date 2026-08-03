@@ -25,7 +25,7 @@ export const getTransporter = () => {
   return transporter;
 };
 
-const layout = (title, body) => `
+export const layout = (title, body) => `
   <div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:24px;">
     <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
       <div style="background:linear-gradient(135deg,#2563eb,#4f46e5);padding:24px 32px;">
