@@ -38,6 +38,28 @@
 - ✅ Real-time OCR processing feedback
 - ✅ Confidence scoring visual indicators
 
+#### **Notification Delivery (Email + WhatsApp)**
+- ✅ Single day-of-expiry notification per product (deduplicated)
+- ✅ Email alerts via Gmail SMTP (nodemailer, app password)
+- ✅ WhatsApp alerts via Meta WhatsApp Cloud API
+- ✅ User-selectable channels in Settings (email / WhatsApp)
+- ✅ Phone number + country code collected at registration and after login
+- ✅ Delivery status tracking (`sent` / `failed`) per channel
+- ✅ In-app notification type coloring (info / warning / expiry / error)
+
+#### **Admin Panel**
+- ✅ Role-based access (`user` / `admin`) via `ADMIN_EMAILS` env var
+- ✅ Admin dashboard with platform stats
+- ✅ User management (list, promote/demote, delete with data cleanup)
+- ✅ All-products view with active/expired filtering
+- ✅ Notification delivery overview with channel filter
+
+#### **Settings & Onboarding**
+- ✅ Settings page for profile, phone, country code, notification preferences
+- ✅ Complete-profile onboarding flow after first registration
+- ✅ Admin / Settings links and unread notification badge in navbar
+- ✅ Commercial landing page (how-it-works, pricing, features)
+
 ---
 
 ## 🧪 **Testing Guide**
@@ -205,8 +227,27 @@ npm run dev:ocr
 ## 🎯 **Next Steps**
 
 1. **Immediate:** System is production-ready for single-user testing
-2. **Scaling:** Deploy with Docker Compose for multi-user environments  
+2. **Scaling:** Deploy with Docker Compose for multi-user environments
 3. **Enhancement:** Add batch processing for multiple image uploads
 4. **Monitoring:** Implement comprehensive logging and metrics
+
+### 🔐 **Setup: Notifications & Admin (new)**
+Add these to `backend/.env` (see `.env.example`):
+
+```bash
+# Email (Gmail app password)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=you@gmail.com
+SMTP_PASS=your-app-password
+EMAIL_FROM=you@gmail.com
+
+# WhatsApp (Meta WhatsApp Cloud API)
+WHATSAPP_ACCESS_TOKEN=...
+WHATSAPP_PHONE_NUMBER_ID=...
+
+# Admin users (comma separated)
+ADMIN_EMAILS=admin@example.com
+```
 
 **The ExpiryTracker smart OCR system is now fully functional and production-ready!** 🎉
