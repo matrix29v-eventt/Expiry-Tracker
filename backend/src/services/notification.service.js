@@ -57,6 +57,36 @@ export const sendExpiryEmail = async ({ to, productName, expiryDate, category })
   });
 };
 
+const buildTestEmailHtml = () => `
+  <div style="font-family:Arial,Helvetica,sans-serif;background:#f4f6fb;padding:24px;">
+    <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e5e7eb;">
+      <div style="background:linear-gradient(135deg,#10b981,#0d9488);padding:24px 32px;">
+        <h1 style="color:#ffffff;margin:0;font-size:22px;">🧪 Test Notification</h1>
+      </div>
+      <div style="padding:32px;">
+        <p style="color:#374151;font-size:15px;line-height:1.6;">Hi there,</p>
+        <p style="color:#374151;font-size:15px;line-height:1.6;">
+          This is a test email from <strong>ExpiryTracker</strong>. If you&apos;re reading this, your email notifications are working correctly.
+        </p>
+        <p style="color:#6b7280;font-size:13px;line-height:1.6;">
+          You&apos;ll receive a message like this whenever one of your tracked products expires.
+        </p>
+      </div>
+      <div style="padding:16px 32px;background:#f9fafb;border-top:1px solid #e5e7eb;">
+        <p style="margin:0;color:#9ca3af;font-size:12px;">Sent by ExpiryTracker. Manage these alerts anytime in Settings.</p>
+      </div>
+    </div>
+  </div>
+`;
+
+export const sendTestNotificationEmail = async ({ to }) => {
+  return sendEmail({
+    to,
+    subject: "🧪 Test notification from ExpiryTracker",
+    html: buildTestEmailHtml(),
+  });
+};
+
 /* ------------------------------------------------------------------ */
 /*  WhatsApp (Meta WhatsApp Cloud API)                                  */
 /* ------------------------------------------------------------------ */
@@ -125,6 +155,54 @@ export const sendExpiryWhatsApp = async ({ to, productName, expiryDate }) => {
     return { ok: true };
   } catch (error) {
     console.error("[notification.service] WhatsApp send failed:", error.message);
+    return { ok: false, error: error.message };
+  }
+};
+
+export const sendTestWhatsApp = async ({ to }) => {
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  if (!token || !phoneNumberId) {
+    return { ok: false, error: "WhatsApp API not configured" };
+  }
+
+  const text = [
+    "🧪 *TEST NOTIFICATION*",
+    "",
+    "This is a test message from *ExpiryTracker*.",
+    "Your WhatsApp notifications are working correctly.",
+    "",
+    "— ExpiryTracker",
+  ].join("\n");
+
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v21.0/${phoneNumberId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          messaging_product: "whatsapp",
+          to,
+          type: "text",
+          text: { body: text },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const body = await response.text();
+      console.error("[notification.service] WhatsApp test send failed:", body);
+      return { ok: false, error: `WhatsApp API error ${response.status}` };
+    }
+
+    return { ok: true };
+  } catch (error) {
+    console.error("[notification.service] WhatsApp test send failed:", error.message);
     return { ok: false, error: error.message };
   }
 };
@@ -199,6 +277,42 @@ export const deliverExpiryNotification = async ({ user, product, message }) => {
       deliveryStatus: result.ok ? "sent" : "failed",
       deliveredAt: result.ok ? new Date() : undefined,
     });
+  }
+
+  return results;
+};
+
+/**
+ * Sends a test notification through every channel the user enabled.
+ * Returns [{ channel, ok, error }] without persisting Notification rows.
+ */
+export const sendTestNotification = async ({ user }) => {
+  const channels = userChannels(user);
+  if (channels.length === 0) {
+    return [{ channel: "none", ok: false, error: "No delivery channel enabled" }];
+  }
+
+  const waNumber = normalizePhone(user.phone, user.countryCode);
+  const dashboardUrl = `${process.env.FRONTEND_URL || "http://localhost:3000"}/dashboard`;
+  const results = [];
+
+  for (const channel of channels) {
+    let result;
+
+    if (channel === "email") {
+      result = await sendTestNotificationEmail({ to: user.email });
+    } else if (channel === "whatsapp") {
+      result = await sendTestWhatsApp({ to: waNumber });
+    } else {
+      result = await sendPushNotification({
+        user,
+        title: "🧪 Test notification",
+        body: "Your push notifications are working!",
+        url: dashboardUrl,
+      });
+    }
+
+    results.push({ channel, ok: result.ok, error: result.error });
   }
 
   return results;

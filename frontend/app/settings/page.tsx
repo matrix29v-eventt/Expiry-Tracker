@@ -37,6 +37,9 @@ export default function SettingsPage() {
   const [pushBusy, setPushBusy] = useState(false);
   const [pushError, setPushError] = useState("");
 
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState("");
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -168,6 +171,36 @@ export default function SettingsPage() {
     }
   };
 
+  const handleTestNotification = async () => {
+    setTesting(true);
+    setTestResult("");
+    try {
+      const data = await apiFetch("/api/users/me/test-notification", {
+        method: "POST",
+      });
+      const results = (data.results || []) as { channel: string; ok: boolean; error?: string }[];
+      if (results.length === 0) {
+        setTestResult("No delivery channels enabled. Enable email, WhatsApp or push first.");
+        return;
+      }
+      const okCount = results.filter((r) => r.ok).length;
+      const failed = results.filter((r) => !r.ok);
+      if (failed.length === 0) {
+        setTestResult(`Test notification sent successfully on ${results.map((r) => r.channel).join(", ")}.`);
+      } else {
+        setTestResult(
+          `${okCount} of ${results.length} channel${results.length !== 1 ? "s" : ""} delivered. ${failed
+            .map((f) => `${f.channel}: ${f.error || "failed"}`)
+            .join(" · ")}`
+        );
+      }
+    } catch (error) {
+      setTestResult(error instanceof Error ? error.message : "Failed to send test notification");
+    } finally {
+      setTesting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -285,6 +318,22 @@ export default function SettingsPage() {
                 className="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 dark:border-gray-600 rounded"
               />
             </label>
+          </div>
+
+          <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={handleTestNotification}
+              disabled={testing}
+              className="inline-flex items-center px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              {testing ? "Sending..." : "Send test notification"}
+            </button>
+            {testResult && (
+              <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{testResult}</p>
+            )}
           </div>
         </section>
 
