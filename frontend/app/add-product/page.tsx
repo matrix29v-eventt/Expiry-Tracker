@@ -22,6 +22,8 @@ export default function AddProductPage() {
   const [name, setName] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [category, setCategory] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [unit, setUnit] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -92,6 +94,8 @@ const handleExpiryDetected = (detectedDate: string, confidence?: number, method?
             name,
             expiryDate,
             category,
+            quantity: parseInt(quantity, 10) || 1,
+            unit,
             ...(imageUrl ? { imageUrl } : {}),
           }),
         }
@@ -156,6 +160,36 @@ const handleExpiryDetected = (detectedDate: string, confidence?: number, method?
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
+            </div>
+
+            {/* Quantity & Unit */}
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="quantity" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  Quantity
+                </label>
+                <input
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  className="block w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-900 dark:text-white bg-white dark:bg-slate-700"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="unit" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  Unit (optional)
+                </label>
+                <input
+                  id="unit"
+                  type="text"
+                  className="block w-full px-4 py-3 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 bg-white dark:bg-slate-700"
+                  placeholder="e.g. bottles, boxes, packets"
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                />
+              </div>
             </div>
 
             {/* Expiry Date Detection Section */}

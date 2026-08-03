@@ -14,6 +14,8 @@ export interface Product {
   expiryConfidence?: number; // OCR confidence score
   expiryMethod?: string; // Method used to detect date
   autoDetected?: boolean; // Whether date was auto-set
+  quantity?: number;
+  unit?: string;
 }
 
 // Simple category to emoji/icon mapping
@@ -194,6 +196,12 @@ export default function ProductCard({
             <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300">
               {product.name}
             </h3>
+            {((product.quantity || 1) > 1 || product.unit) && (
+              <span className="px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                {product.quantity || 1}
+                {product.unit ? ` ${product.unit}` : ""}
+              </span>
+            )}
           </div>
           {expiryStatus.showConfidence && (
             <div className="flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-full border border-blue-200 dark:border-blue-800/50 group-hover:scale-110 transition-transform duration-300">

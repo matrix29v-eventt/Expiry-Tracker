@@ -11,6 +11,8 @@ export default function EditProductPage() {
 
   const [name, setName] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [unit, setUnit] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -27,6 +29,8 @@ export default function EditProductPage() {
         if (product) {
           setName(product.name);
           setExpiryDate(product.expiryDate.split("T")[0]);
+          setQuantity(String(product.quantity || 1));
+          setUnit(product.unit || "");
           setImageUrl(product.imageUrl || null);
           setImagePreview(product.imageUrl || null);
         }
@@ -72,6 +76,8 @@ const updateProduct = async () => {
         body: JSON.stringify({
           name,
           expiryDate,
+          quantity: parseInt(quantity, 10) || 1,
+          unit,
           imageUrl: newImageUrl,
         }),
       });
@@ -137,6 +143,36 @@ const updateProduct = async () => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
+              </div>
+            </div>
+
+            {/* Quantity & Unit */}
+            <div className="mb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="edit-quantity" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Quantity
+                </label>
+                <input
+                  id="edit-quantity"
+                  type="number"
+                  min="1"
+                  className="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="edit-unit" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Unit (optional)
+                </label>
+                <input
+                  id="edit-unit"
+                  type="text"
+                  className="block w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 bg-white dark:bg-gray-700"
+                  placeholder="e.g. bottles, boxes, packets"
+                  value={unit}
+                  onChange={(e) => setUnit(e.target.value)}
+                />
               </div>
             </div>
 

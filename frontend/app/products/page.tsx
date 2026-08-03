@@ -10,6 +10,8 @@ interface Product {
   expiryDate: string;
   category?: string;
   imageUrl?: string;
+  quantity?: number;
+  unit?: string;
   createdAt?: string;
 }
 
