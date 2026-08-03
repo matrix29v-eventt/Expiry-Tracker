@@ -9,6 +9,9 @@
 - ✅ JWT-based authentication with httpOnly cookies
 - ✅ Secure session management
 - ✅ User registration and login API endpoints
+- ✅ Email verification flow (register → verify link → login gating with resend)
+- ✅ Password reset flow (forgot password → emailed reset link → new password)
+- ✅ Rate limiting on auth (10 req/15 min) and general API (100 req/15 min)
 
 #### **Smart OCR Detection System**
 - ✅ Advanced multi-strategy expiry date detection
@@ -38,14 +41,18 @@
 - ✅ Real-time OCR processing feedback
 - ✅ Confidence scoring visual indicators
 
-#### **Notification Delivery (Email + WhatsApp)**
+#### **Notification Delivery (Email + WhatsApp + Web Push)**
 - ✅ Single day-of-expiry notification per product (deduplicated)
 - ✅ Email alerts via Gmail SMTP (nodemailer, app password)
 - ✅ WhatsApp alerts via Meta WhatsApp Cloud API
-- ✅ User-selectable channels in Settings (email / WhatsApp)
+- ✅ Web Push alerts via VAPID + service worker (works when app is closed)
+- ✅ User-selectable channels in Settings (email / WhatsApp / push)
+- ✅ Per-user reminder schedule (warn N days before expiry, notify on expiry day)
 - ✅ Phone number + country code collected at registration and after login
 - ✅ Delivery status tracking (`sent` / `failed`) per channel
 - ✅ In-app notification type coloring (info / warning / expiry / error)
+- ✅ Paginated notification history (frontend + admin views)
+- ✅ Automated Jest tests for expiry logic and delivery channels
 
 #### **Admin Panel**
 - ✅ Role-based access (`user` / `admin`) via `ADMIN_EMAILS` env var
@@ -56,6 +63,8 @@
 
 #### **Settings & Onboarding**
 - ✅ Settings page for profile, phone, country code, notification preferences
+- ✅ Reminder schedule (warning lead time + notify on expiry day)
+- ✅ Browser push subscription management (enable/disable)
 - ✅ Complete-profile onboarding flow after first registration
 - ✅ Admin / Settings links and unread notification badge in navbar
 - ✅ Commercial landing page (how-it-works, pricing, features)
@@ -246,8 +255,20 @@ EMAIL_FROM=you@gmail.com
 WHATSAPP_ACCESS_TOKEN=...
 WHATSAPP_PHONE_NUMBER_ID=...
 
+# Web Push (generate once: npx web-push generate-vapid-keys)
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:no-reply@expirytracker.app
+
 # Admin users (comma separated)
 ADMIN_EMAILS=admin@example.com
+```
+
+And add the public VAPID key to `frontend/.env.local`:
+
+```bash
+# Frontend (public key only - matches backend VAPID_PUBLIC_KEY)
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
 ```
 
 **The ExpiryTracker smart OCR system is now fully functional and production-ready!** 🎉
