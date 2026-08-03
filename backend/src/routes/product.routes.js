@@ -207,6 +207,58 @@ router.get("/export", protect, async (req, res) => {
   }
 });
 
+/* MARK ALL PAST-EXPIRY PRODUCTS AS EXPIRED */
+router.post("/bulk/expire", protect, async (req, res) => {
+  try {
+    const filter = { user: req.userId, expiryDate: { $lt: startOfToday() }, isExpired: false };
+
+    const products = await Product.find(filter);
+    const result = await Product.updateMany(filter, { $set: { isExpired: true } });
+
+    if (products.length > 0) {
+      await History.insertMany(
+        products.map((p) => ({
+          user: req.userId,
+          productName: p.name,
+          action: "expired",
+          category: p.category,
+          expiryDate: p.expiryDate,
+        }))
+      );
+    }
+
+    res.json({ message: `Marked ${result.modifiedCount} product${result.modifiedCount !== 1 ? "s" : ""} as expired` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/* DELETE ALL PAST-EXPIRY PRODUCTS */
+router.delete("/bulk/expired", protect, async (req, res) => {
+  try {
+    const filter = { user: req.userId, expiryDate: { $lt: startOfToday() } };
+
+    const products = await Product.find(filter);
+    const result = await Product.deleteMany(filter);
+
+    if (products.length > 0) {
+      await History.insertMany(
+        products.map((p) => ({
+          user: req.userId,
+          productName: p.name,
+          action: "deleted",
+          category: p.category,
+          expiryDate: p.expiryDate,
+        }))
+      );
+    }
+
+    res.json({ message: `Deleted ${result.deletedCount} expired product${result.deletedCount !== 1 ? "s" : ""}` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 /* IMPORT PRODUCTS FROM CSV (BATCH) */
 router.post("/import", protect, async (req, res) => {
   try {
