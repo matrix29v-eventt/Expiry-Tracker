@@ -1,16 +1,22 @@
 import express from "express";
 import History from "../models/History.js";
 import { protect } from "../middleware/auth.middleware.js";
+import { getPagination, paginateResponse } from "../utils/pagination.js";
 
 const router = express.Router();
 
 /* GET USER HISTORY */
 router.get("/", protect, async (req, res) => {
   try {
-    const history = await History.find({ user: req.userId })
-      .sort({ createdAt: -1 })
-      .limit(100);
-    res.json(history);
+    const { page, limit, skip } = getPagination(req.query, 20);
+    const filter = { user: req.userId };
+
+    const [history, total] = await Promise.all([
+      History.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      History.countDocuments(filter),
+    ]);
+
+    res.json(paginateResponse(history, total, page, limit));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

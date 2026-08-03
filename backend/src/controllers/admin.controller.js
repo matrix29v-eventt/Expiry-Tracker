@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import Product from "../models/Product.js";
 import Notification from "../models/Notification.js";
 import History from "../models/History.js";
+import { getPagination, paginateResponse } from "../utils/pagination.js";
 
 export const getStats = async (req, res) => {
   try {
@@ -37,27 +38,34 @@ export const getStats = async (req, res) => {
 
 export const listUsers = async (req, res) => {
   try {
-    const users = await User.find().sort({ createdAt: -1 }).select("-password");
+    const { page, limit, skip } = getPagination(req.query, 20);
 
+    const [users, total] = await Promise.all([
+      User.find().sort({ createdAt: -1 }).select("-password").skip(skip).limit(limit),
+      User.countDocuments(),
+    ]);
+
+    const userIds = users.map((user) => user._id);
     const productCounts = await Product.aggregate([
+      { $match: { user: { $in: userIds } } },
       { $group: { _id: "$user", count: { $sum: 1 } } },
     ]);
     const countMap = {};
     for (const row of productCounts) countMap[row._id] = row.count;
 
-    res.json(
-      users.map((user) => ({
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        phone: user.phone,
-        countryCode: user.countryCode,
-        notificationPreferences: user.notificationPreferences,
-        createdAt: user.createdAt,
-        productCount: countMap[user._id] || 0,
-      }))
-    );
+    const data = users.map((user) => ({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      countryCode: user.countryCode,
+      notificationPreferences: user.notificationPreferences,
+      createdAt: user.createdAt,
+      productCount: countMap[user._id] || 0,
+    }));
+
+    res.json(paginateResponse(data, total, page, limit));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -110,15 +118,21 @@ export const deleteUser = async (req, res) => {
 export const listProducts = async (req, res) => {
   try {
     const { status } = req.query;
+    const { page, limit, skip } = getPagination(req.query, 20);
     const filter = {};
     if (status === "expired") filter.isExpired = true;
     if (status === "active") filter.isExpired = false;
 
-    const products = await Product.find(filter)
-      .populate("user", "name email")
-      .sort({ expiryDate: 1 });
+    const [products, total] = await Promise.all([
+      Product.find(filter)
+        .populate("user", "name email")
+        .sort({ expiryDate: 1 })
+        .skip(skip)
+        .limit(limit),
+      Product.countDocuments(filter),
+    ]);
 
-    res.json(products);
+    res.json(paginateResponse(products, total, page, limit));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -127,16 +141,21 @@ export const listProducts = async (req, res) => {
 export const listNotifications = async (req, res) => {
   try {
     const { channel } = req.query;
+    const { page, limit, skip } = getPagination(req.query, 20);
     const filter = {};
     if (channel) filter.channel = channel;
 
-    const notifications = await Notification.find(filter)
-      .populate("user", "name email")
-      .populate("product", "name expiryDate")
-      .sort({ createdAt: -1 })
-      .limit(200);
+    const [notifications, total] = await Promise.all([
+      Notification.find(filter)
+        .populate("user", "name email")
+        .populate("product", "name expiryDate")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Notification.countDocuments(filter),
+    ]);
 
-    res.json(notifications);
+    res.json(paginateResponse(notifications, total, page, limit));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

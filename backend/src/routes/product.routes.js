@@ -2,6 +2,7 @@ import express from "express";
 import Product from "../models/Product.js";
 import History from "../models/History.js";
 import { protect } from "../middleware/auth.middleware.js";
+import { getPagination, paginateResponse } from "../utils/pagination.js";
 
 const router = express.Router();
 
@@ -30,11 +31,15 @@ router.post("/add", protect, async (req, res) => {
 /* LIST USER PRODUCTS */
 router.get("/list", protect, async (req, res) => {
   try {
-    const products = await Product.find({ user: req.userId }).sort({
-      createdAt: -1,
-    });
+    const { page, limit, skip } = getPagination(req.query, 12);
+    const filter = { user: req.userId };
 
-    res.json(products);
+    const [products, total] = await Promise.all([
+      Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      Product.countDocuments(filter),
+    ]);
+
+    res.json(paginateResponse(products, total, page, limit));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
