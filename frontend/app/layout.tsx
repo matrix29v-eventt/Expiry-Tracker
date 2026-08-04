@@ -20,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} flex flex-col min-h-screen font-sans transition-colors duration-300 antialiased bg-white dark:bg-slate-900`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} flex flex-col min-h-screen font-sans antialiased`}>
         <DarkModeInitializer />
 
         <Toaster
@@ -38,7 +38,7 @@ export default function RootLayout({
 
         <Navbar />
 
-        <main className="flex-grow p-4 bg-gray-50 dark:bg-slate-900">{children}</main>
+        <main className="flex-grow p-4">{children}</main>
 
         <Footer />
 

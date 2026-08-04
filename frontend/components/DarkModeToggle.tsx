@@ -1,159 +1,63 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 
-// Enhanced theme management hook
-export function useTheme() {
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window === 'undefined') {
-      return {
-        isDark: false,
-        systemPreference: "light" as "light" | "dark",
-        isTransitioning: false
-      };
-    }
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "auto";
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const systemPref = systemPrefersDark ? "dark" : "light";
-    const effectiveTheme = savedTheme || systemPref;
-    const shouldBeDark = effectiveTheme === "dark" || (effectiveTheme === "auto" && systemPrefersDark);
-    
-    if (shouldBeDark) {
-      document.documentElement.classList.add("dark");
-    }
-    
-    return {
-      isDark: shouldBeDark,
-      systemPreference: systemPref,
-      isTransitioning: false
-    };
-  });
-  const mediaQueryRef = useRef<MediaQueryList | null>(null);
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | "auto";
-    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const effectiveTheme = savedTheme || (systemPrefersDark ? "dark" : "light");
-    const shouldBeDark = effectiveTheme === "dark";
-    
-    if (shouldBeDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleChange = (e: MediaQueryListEvent) => {
-      const newSystemPref = e.matches ? "dark" : "light";
-      setIsDarkMode(prev => {
-        if (prev.systemPreference !== newSystemPref) {
-          return {
-            ...prev,
-            systemPreference: newSystemPref,
-            isTransitioning: true
-          };
-        }
-        return prev;
-      });
-    };
-
-    mediaQueryRef.current = window.matchMedia("(prefers-color-scheme: dark)");
-    mediaQueryRef.current?.addEventListener("change", handleChange);
-
-    return () => {
-      if (mediaQueryRef.current) {
-        mediaQueryRef.current.removeEventListener("change", handleChange);
-      }
-    };
-  }, []);
-
-  const toggleTheme = (newTheme?: "light" | "dark") => {
-    setIsDarkMode(prev => ({ ...prev, isTransitioning: true }));
-    
-    setTimeout(() => {
-      const resolvedTheme = newTheme || (!isDarkMode.isDark ? "dark" : "light");
-      setIsDarkMode(prev => ({
-        ...prev,
-        isDark: resolvedTheme === "dark",
-        isTransitioning: false
-      }));
-      
-      if (resolvedTheme === "dark") {
-        document.documentElement.classList.add("dark");
-        localStorage.setItem("theme", "dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-        localStorage.setItem("theme", "light");
-      }
-    }, 300);
-  };
-
-  const cleanup = () => {
-    if (mediaQueryRef.current) {
-      // The cleanup is already handled in the useEffect return
-    }
-  };
-
-  return {
-    isDarkMode: isDarkMode.isDark,
-    isTransitioning: isDarkMode.isTransitioning,
-    systemPreference: isDarkMode.systemPreference,
-    toggleTheme,
-    cleanup
-  };
+function getInitialDark(): boolean {
+  if (typeof window === "undefined") return false;
+  const saved = localStorage.getItem("theme") as "light" | "dark" | null;
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return saved === "dark" || (!saved && prefersDark);
 }
 
-// Enhanced DarkModeToggle component
+export function useTheme() {
+  const [isDark, setIsDark] = useState(getInitialDark);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem("theme")) {
+        setIsDark(e.matches);
+      }
+    };
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const toggleTheme = useCallback(() => {
+    setIsDark((prev) => {
+      const next = !prev;
+      document.documentElement.classList.toggle("dark", next);
+      localStorage.setItem("theme", next ? "dark" : "light");
+      return next;
+    });
+  }, []);
+
+  return { isDark, toggleTheme };
+}
+
 export default function DarkModeToggle() {
-  const { isDarkMode, isTransitioning, toggleTheme } = useTheme();
+  const { isDark, toggleTheme } = useTheme();
 
   return (
     <button
-      onClick={() => toggleTheme()}
-      className="group relative p-3 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-      aria-label={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
-      title={`Switch to ${isDarkMode ? "light" : "dark"} mode`}
+      onClick={toggleTheme}
+      className="group relative p-2.5 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:scale-105 transition-all duration-200"
+      aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
+      title={`Switch to ${isDark ? "light" : "dark"} mode`}
     >
-      <div className="relative w-6 h-6 overflow-hidden">
-        <svg
-          className={`w-6 h-6 transition-all duration-500 ${
-            isTransitioning ? "opacity-50" : "opacity-100"
-          } ${isDarkMode ? "rotate-180" : ""}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-        >
-          {/* Sun icon */}
-          <path
-            className={`transition-all duration-500 ${
-              isDarkMode ? "stroke-slate-400" : "stroke-yellow-500"
-            }`}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M12 3v1m0 4l-2.5 -2.5 0 0 -2.5 0 -2.5 0m6 4l2.5 2.5 0 0 2.5 0 2.5M6 4l2.5 2.5 0 0 2.5 2.5 6"
-          />
-          
-          {/* Moon icon */}
-          <path
-            className={`transition-all duration-500 absolute inset-0 ${
-              isDarkMode ? "stroke-blue-500 opacity-100 scale-100 rotate-0" : "opacity-0 scale-50 rotate-180"
-            } ${!isDarkMode ? "stroke-slate-400 opacity-0 scale-50 rotate-180" : "opacity-100 scale-0 rotate-0"}
-            }`}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"
-            strokeWidth={2}
-            fill="none"
-          />
+      {isDark ? (
+        <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 4l-2.5-2.5M6 4l2.5 2.5M12 7l2.5 2.5M18 4l-2.5 2.5M6 12H4m16 0h-2M6.2 6.2L4.8 4.8m12.4 0L17 6.2M12 17a5 5 0 100-10 5 5 0 000 10z" />
         </svg>
-      </div>
-
-      {/* Tooltip */}
-      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-slate-900 dark:bg-slate-100 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-        {isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
-      </div>
+      ) : (
+        <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" />
+        </svg>
+      )}
     </button>
   );
 }

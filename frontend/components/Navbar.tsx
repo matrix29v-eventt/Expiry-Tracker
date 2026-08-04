@@ -63,7 +63,7 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm sticky top-0 z-50">
+    <nav className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-gray-200 dark:border-white/10 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -82,21 +82,21 @@ export default function Navbar() {
             <div className="hidden md:flex items-center space-x-1">
               <Link
                 href="/dashboard"
-                className="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"
+                className="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors font-medium"
               >
                 Dashboard
               </Link>
 
               <Link
                 href="/products"
-                className="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"
+                className="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors font-medium"
               >
                 Products
               </Link>
 
               <Link
                 href="/lists"
-                className="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"
+                className="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors font-medium"
               >
                 Lists
               </Link>
@@ -104,7 +104,7 @@ export default function Navbar() {
               {isLoggedIn && (
                 <Link
                   href="/settings"
-                  className="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors font-medium"
+                  className="px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 transition-colors font-medium"
                 >
                   Settings
                 </Link>
@@ -113,7 +113,7 @@ export default function Navbar() {
               {isLoggedIn && role === "admin" && (
                 <Link
                   href="/admin"
-                  className="px-3 py-2 rounded-lg text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors font-semibold"
+                  className="px-3 py-2 rounded-lg text-indigo-600 dark:text-emerald-400 hover:text-indigo-700 dark:hover:text-emerald-300 hover:bg-indigo-50 dark:hover:bg-emerald-500/10 transition-colors font-semibold"
                 >
                   Admin
                 </Link>
@@ -151,7 +151,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     title="Notifications"
-                    className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    className="relative p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -165,7 +165,7 @@ export default function Navbar() {
 
                   <Link
                     href="/logout"
-                    className="px-4 py-2 rounded-lg text-red-600 bg-red-50 dark:bg-red-900/50 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/70 transition-colors font-medium"
+                    className="px-4 py-2 rounded-lg text-red-600 bg-red-50 dark:bg-red-500/10 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors font-medium"
                   >
                     Logout
                   </Link>
