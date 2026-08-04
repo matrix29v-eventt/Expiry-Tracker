@@ -1,79 +1,96 @@
 @import "tailwindcss";
 
-:root {
-  /* Primary Brand Colors */
-  --primary-50: #eff6ff;
-  --primary-100: #dbeafe;
-  --primary-200: #bfdbfe;
-  --primary-300: #93c5fd;
-  --primary-400: #60a5fa;
-  --primary-500: #3b82f6;
-  --primary-600: #2563eb;
-  --primary-700: #1d4ed8;
-  --primary-800: #1e40af;
-  --primary-900: #1e3a8a;
-
-  /* Secondary/Success Colors */
-  --success-50: #f0fdf4;
-  --success-100: #dcfce7;
-  --success-200: #bbf7d0;
-  --success-300: #86efac;
-  --success-400: #4ade80;
-  --success-500: #22c55e;
-  --success-600: #16a34a;
-  --success-700: #15803d;
-  --success-800: #166534;
-  --success-900: #14532d;
-
-  /* Warning Colors */
-  --warning-50: #fffbeb;
-  --warning-100: #fef3c7;
-  --warning-200: #fde68a;
-  --warning-300: #fcd34d;
-  --warning-400: #fbbf24;
-  --warning-500: #f59e0b;
-  --warning-600: #d97706;
-  --warning-700: #b45309;
-  --warning-800: #92400e;
-  --warning-900: #78350f;
-
-  /* Error/Danger Colors */
-  --error-50: #fef2f2;
-  --error-100: #fee2e2;
-  --error-200: #fecaca;
-  --error-300: #fca5a5;
-  --error-400: #f87171;
-  --error-500: #ef4444;
-  --error-600: #dc2626;
-  --error-700: #b91c1c;
-  --error-800: #991b1b;
-  --error-900: #7f1d1d;
-
-  /* Neutral Colors */
-  --gray-50: #f9fafb;
-  --gray-100: #f3f4f6;
-  --gray-200: #e5e7eb;
-  --gray-300: #d1d5db;
-  --gray-400: #9ca3af;
-  --gray-500: #6b7280;
-  --gray-600: #4b5563;
-  --gray-700: #374151;
-  --gray-800: #1f2937;
-  --gray-900: #111827;
-
-  /* Background & Foreground */
-  --background: #ffffff;
-  --foreground: #111827;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Blue → Emerald Green (#059669) */
+  --color-blue-50: #ecfdf5;
+  --color-blue-100: #d1fae5;
+  --color-blue-200: #a7f3d0;
+  --color-blue-300: #6ee7b7;
+  --color-blue-400: #34d399;
+  --color-blue-500: #10b981;
+  --color-blue-600: #059669;
+  --color-blue-700: #047857;
+  --color-blue-800: #065f46;
+  --color-blue-900: #064e3b;
+
+  /* Indigo → Darker Emerald (gradient secondaries) */
+  --color-indigo-50: #ecfdf5;
+  --color-indigo-100: #d1fae5;
+  --color-indigo-200: #a7f3d0;
+  --color-indigo-300: #6ee7b7;
+  --color-indigo-400: #34d399;
+  --color-indigo-500: #10b981;
+  --color-indigo-600: #047857;
+  --color-indigo-700: #065f46;
+  --color-indigo-800: #064e3b;
+  --color-indigo-900: #022c22;
+
+  /* Red → Soft Coral (#F43F5E) */
+  --color-red-50: #fff1f2;
+  --color-red-100: #ffe4e6;
+  --color-red-200: #fecdd3;
+  --color-red-300: #fda4af;
+  --color-red-400: #fb7185;
+  --color-red-500: #f43f5e;
+  --color-red-600: #e11d48;
+  --color-red-700: #be123c;
+  --color-red-800: #9f1239;
+  --color-red-900: #881337;
+
+  /* Rose (same as coral, for badges) */
+  --color-rose-50: #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-rose-200: #fecdd3;
+  --color-rose-300: #fda4af;
+  --color-rose-400: #fb7185;
+  --color-rose-500: #f43f5e;
+  --color-rose-600: #e11d48;
+  --color-rose-700: #be123c;
 }
 
-/* Dark Mode Variables */
+:root {
+  /* Primary: Emerald Green */
+  --primary-50: #ecfdf5;
+  --primary-100: #d1fae5;
+  --primary-200: #a7f3d0;
+  --primary-300: #6ee7b7;
+  --primary-400: #34d399;
+  --primary-500: #10b981;
+  --primary-600: #059669;
+  --primary-700: #047857;
+  --primary-800: #065f46;
+  --primary-900: #064e3b;
+
+  /* Warning: Soft Coral */
+  --error-50: #fff1f2;
+  --error-100: #ffe4e6;
+  --error-200: #fecdd3;
+  --error-500: #f43f5e;
+  --error-600: #e11d48;
+
+  /* Neutral Slate */
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+
+  /* Background & Foreground */
+  --background: #f8fafc;
+  --foreground: #1e293b;
+}
+
+/* Dark Mode */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0f172a;
@@ -81,7 +98,6 @@
   }
 }
 
-/* Dark mode styles */
 .dark {
   --background: #0f172a;
   --foreground: #f1f5f9;
@@ -215,7 +231,7 @@ body {
 }
 
 .gradient-secondary {
-  background: linear-gradient(135deg, var(--success-600), var(--success-500));
+  background: linear-gradient(135deg, var(--primary-700), var(--primary-600));
 }
 
 /* Card enhancements */
@@ -278,11 +294,11 @@ body {
 
 /* Enhanced light mode gradients */
 body:not(.dark) {
-  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #dbeafe 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #d1fae5 50%, #ecfdf5 100%);
 }
 
 body:not(.dark) .gradient-bg {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%);
 }
 
 /* Theme-aware shadows */
@@ -303,7 +319,7 @@ body:not(.dark) .gradient-bg {
 /* Smooth focus transitions */
 .focus-theme:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.5);
   transform: scale(1.02);
 }
 
@@ -370,7 +386,7 @@ body:not(.dark) .gradient-bg {
 
 /* Focus management */
 .focus-trap:focus-visible {
-  outline: 3px solid #3b82f6;
+  outline: 3px solid #059669;
   outline-offset: 2px;
   border-radius: 8px;
 }
@@ -466,18 +482,18 @@ html[data-font-size="xlarge"] {
 /* Theme-aware background patterns */
 .theme-pattern {
   background-image: 
-    radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(120, 119, 198, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(5, 150, 105, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(5, 150, 105, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
   background-size: 20px 20px, 10px 10px, 15px 15px;
   background-position: 0% 0%, 100% 100%, 50% 50%;
 }
 
 .dark .theme-pattern {
   background-image: 
-    radial-gradient(circle at 20% 50%, rgba(96, 165, 250, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(96, 165, 250, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(168, 85, 247, 0.05) 0%, transparent 50%);
+    radial-gradient(circle at 20% 50%, rgba(5, 150, 105, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(5, 150, 105, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
   background-size: 20px 20px, 10px 10px, 15px 15px;
   background-position: 0% 0%, 100% 100%, 50% 50%;
 }
@@ -548,13 +564,13 @@ html[data-font-size="xlarge"] {
 }
 
 .light .focus-enhanced:focus-visible::after {
-  border-color: rgb(59, 130, 246);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  border-color: rgb(5, 150, 105);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3);
 }
 
 .dark .focus-enhanced:focus-visible::after {
-  border-color: rgb(96, 165, 250);
-  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3);
+  border-color: rgb(52, 211, 153);
+  box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.3);
 }
 
 /* Smooth button animations */
@@ -593,7 +609,7 @@ html[data-font-size="xlarge"] {
 
 /* Focus management improvements */
 .focus-visible {
-  outline: 3px solid #3b82f6 !important;
+  outline: 3px solid #059669 !important;
   outline-offset: 2px !important;
   border-radius: 6px !important;
 }
@@ -603,7 +619,7 @@ html[data-font-size="xlarge"] {
   position: absolute;
   top: -40px;
   left: 6px;
-  background: #3b82f6;
+  background: #059669;
   color: white;
   padding: 8px;
   text-decoration: none;
