@@ -2,6 +2,7 @@ import crypto from "crypto";
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { OAuth2Client } from "google-auth-library";
 import {
   sendVerificationEmail,
   sendResetPasswordEmail,
@@ -252,4 +253,71 @@ export const loginUser = async (req, res) => {
       role: user.role,
     },
   });
+};
+
+/* GOOGLE LOGIN */
+export const googleLogin = async (req, res) => {
+  const { credential } = req.body;
+
+  if (!credential) {
+    return res.status(400).json({ message: "Google credential is required" });
+  }
+
+  try {
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (user) {
+      user.googleId = googleId;
+      if (!user.isVerified) {
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        user.verificationTokenExpires = undefined;
+      }
+      if (picture && !user.avatar) {
+        user.avatar = picture;
+      }
+      await user.save();
+    } else {
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        isVerified: true,
+        avatar: picture || "",
+      });
+    }
+
+    await syncRole(user);
+
+    const token = createToken(user);
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.json({
+      message: "Google login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("[auth] Google verification failed:", error.message);
+    return res.status(401).json({ message: "Invalid Google credential" });
+  }
 };

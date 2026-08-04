@@ -7,12 +7,14 @@ import {
   resendVerification,
   forgotPassword,
   resetPassword,
+  googleLogin,
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+router.post("/google", googleLogin);
 router.post("/logout", logoutUser);
 router.post("/verify-email", verifyEmail);
 router.post("/resend-verification", resendVerification);

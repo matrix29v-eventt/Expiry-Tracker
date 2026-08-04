@@ -1,10 +1,23 @@
 "use client";
 
-import { useState, ChangeEvent, FormEvent } from "react";
+import { useState, ChangeEvent, FormEvent, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LoginForm } from "@/app/types/auth";
 import { ApiResponse } from "@/app/types/api";
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: Record<string, unknown>) => void;
+          renderButton: (element: HTMLElement, config: Record<string, unknown>) => void;
+        };
+      };
+    };
+  }
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,6 +26,8 @@ export default function LoginPage() {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [resending, setResending] = useState(false);
   const [resentMsg, setResentMsg] = useState("");
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleCallbackRef = useRef<(response: { credential?: string }) => void>(() => {});
 
   const [form, setForm] = useState<LoginForm>({
     email: "",
@@ -20,6 +35,58 @@ export default function LoginPage() {
   });
 
   const [passwordError, setPasswordError] = useState("");
+
+  googleCallbackRef.current = async (response: { credential?: string }) => {
+    if (!response.credential) return;
+    setIsLoading(true);
+    setError("");
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: response.credential }),
+        credentials: "include",
+      });
+      const data: ApiResponse = await res.json();
+      if (!res.ok) {
+        setError(data.message || "Google login failed");
+        return;
+      }
+      router.push("/dashboard");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!clientId) return;
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (response: { credential?: string }) => googleCallbackRef.current(response),
+        });
+        if (googleButtonRef.current) {
+          window.google.accounts.id.renderButton(googleButtonRef.current, {
+            theme: "outline",
+            size: "large",
+            width: "100%",
+            text: "signin_with",
+          });
+        }
+      }
+    };
+    document.head.appendChild(script);
+    return () => { document.head.removeChild(script); };
+  }, []);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -273,6 +340,22 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
+
+            {/* Google Sign-In */}
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-medium">or continue with</span>
+                </div>
+              </div>
+              <div className="mt-4" ref={googleButtonRef}></div>
+              {!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
+                <p className="text-xs text-center text-slate-400 mt-2">Google sign-in not configured</p>
+              )}
+            </div>
 
             <div className="text-center mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
               <p className="text-sm text-slate-600 dark:text-slate-400">

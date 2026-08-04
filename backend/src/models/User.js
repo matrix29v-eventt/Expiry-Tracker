@@ -43,7 +43,13 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
+    },
+    googleId: {
+      type: String,
+      sparse: true,
     },
     role: {
       type: String,
@@ -79,6 +85,10 @@ const userSchema = new mongoose.Schema(
     pushSubscriptions: {
       type: [pushSubscriptionSchema],
       default: [],
+    },
+    avatar: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }
