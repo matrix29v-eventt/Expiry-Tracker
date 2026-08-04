@@ -10,8 +10,6 @@ import { memberRole, canView, canEdit } from "../utils/listPermissions.js";
 
 const router = express.Router();
 
-const MAX_PRODUCTS = Number(process.env.MAX_PRODUCTS || 500);
-
 const getList = (id) => List.findById(id).populate("members.user", "name email");
 
 /* GET ALL LISTS (owned or member) */
@@ -323,11 +321,6 @@ router.post("/:id/products", protect, async (req, res) => {
     }
     if (!canEdit(memberRole(list, req.userId))) {
       return res.status(403).json({ message: "Editor access required" });
-    }
-
-    const productCount = await Product.countDocuments({ user: req.userId });
-    if (productCount >= MAX_PRODUCTS) {
-      return res.status(400).json({ message: `Product limit of ${MAX_PRODUCTS} reached` });
     }
 
     const product = await Product.create({

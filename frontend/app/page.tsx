@@ -50,7 +50,7 @@ export default function Home() {
             </div>
 
             <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
-              Free forever plan · No credit card required
+              Completely free · No credit card required
             </p>
           </div>
 
@@ -135,45 +135,22 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Pricing */}
+        {/* Trust Section */}
         <div className="w-full">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Simple, transparent pricing
-            </h2>
-            <p className="text-slate-600 dark:text-slate-300 text-lg max-w-2xl mx-auto">
-              Start free. Upgrade when you grow.
-            </p>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <PricingCard
-              name="Free"
-              price="$0"
-              period="forever"
-              features={["Up to 20 products", "Email alerts", "In-app notifications", "OCR scanning", "CSV export"]}
-              cta="Start Free"
-              href="/register"
-              highlight={false}
-            />
-            <PricingCard
-              name="Pro"
-              price="$4.99"
-              period="per month"
-              features={["Unlimited products", "Email + WhatsApp alerts", "Priority OCR scanning", "Advanced analytics", "Cloud backup & restore", "Priority support"]}
-              cta="Start Free Trial"
-              href="/register"
-              highlight
-            />
-            <PricingCard
-              name="Business"
-              price="$19.99"
-              period="per month"
-              features={["Everything in Pro", "Multiple lists & teams", "Bulk import / export", "Admin controls", "Dedicated support"]}
-              cta="Contact Us"
-              href="/register"
-              highlight={false}
-            />
+            {[
+              { icon: "💰", title: "100% Free", desc: "No hidden charges, no credit card needed. Everything is free while we grow." },
+              { icon: "🔒", title: "Your Data, Your Control", desc: "Export, backup, or delete your data anytime. We never sell your information." },
+              { icon: "🚀", title: "Built for Scale", desc: "Unlimited products, unlimited lists. No artificial caps — just a tool that works." },
+            ].map((item) => (
+              <div key={item.title} className="group relative overflow-hidden rounded-2xl glass card-hover p-6 border border-slate-200/50 dark:border-slate-700/50 text-center">
+                <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-3xl mb-4 group-hover:scale-110 transition-all duration-500 shadow-lg mx-auto">
+                  {item.icon}
+                </div>
+                <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">{item.title}</h3>
+                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -220,65 +197,6 @@ function Stat({ number, label }: { number: string; label: string }) {
     <div className="text-center">
       <div className="text-3xl lg:text-4xl font-bold text-blue-600 dark:text-blue-400 mb-2">{number}</div>
       <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">{label}</div>
-    </div>
-  );
-}
-
-function PricingCard({
-  name,
-  price,
-  period,
-  features,
-  cta,
-  href,
-  highlight,
-}: {
-  name: string;
-  price: string;
-  period: string;
-  features: string[];
-  cta: string;
-  href: string;
-  highlight: boolean;
-}) {
-  return (
-    <div
-      className={`relative rounded-2xl p-6 border ${
-        highlight
-          ? "bg-gradient-to-b from-blue-600 to-indigo-700 text-white shadow-2xl scale-105 border-blue-500"
-          : "glass card-hover bg-white/70 dark:bg-slate-800/70 border-slate-200 dark:border-slate-700"
-      }`}
-    >
-      {highlight && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-amber-400 text-amber-900 text-xs font-bold shadow">
-          MOST POPULAR
-        </span>
-      )}
-      <h3 className={`font-bold text-xl mb-1 ${highlight ? "text-white" : "text-slate-900 dark:text-white"}`}>{name}</h3>
-      <div className="mb-4">
-        <span className={`text-4xl font-black ${highlight ? "text-white" : "text-slate-900 dark:text-white"}`}>{price}</span>
-        <span className={`text-sm ${highlight ? "text-blue-100" : "text-slate-500 dark:text-slate-400"}`}> / {period}</span>
-      </div>
-      <ul className="space-y-2 mb-6">
-        {features.map((f) => (
-          <li key={f} className={`flex items-start gap-2 text-sm ${highlight ? "text-blue-50" : "text-slate-600 dark:text-slate-300"}`}>
-            <svg className={`w-4 h-4 mt-0.5 flex-shrink-0 ${highlight ? "text-amber-300" : "text-green-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-            {f}
-          </li>
-        ))}
-      </ul>
-      <Link
-        href={href}
-        className={`block text-center px-4 py-3 rounded-xl font-semibold transition-all duration-200 ${
-          highlight
-            ? "bg-white text-blue-700 hover:bg-blue-50"
-            : "bg-blue-600 text-white hover:bg-blue-700"
-        }`}
-      >
-        {cta}
-      </Link>
     </div>
   );
 }

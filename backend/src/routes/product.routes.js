@@ -7,11 +7,6 @@ import { startOfToday, addDays } from "../utils/expiryLogic.js";
 
 const router = express.Router();
 
-/* Max products a single user can track (overridable via MAX_PRODUCTS env) */
-const MAX_PRODUCTS = parseInt(process.env.MAX_PRODUCTS, 10) || 500;
-
-const productCount = (userId) => Product.countDocuments({ user: userId });
-
 const getWeekRange = (week) => {
   const start = startOfToday();
   const end = addDays(start, 6);
@@ -31,13 +26,6 @@ const getWeekRange = (week) => {
 /* ADD PRODUCT */
 router.post("/add", protect, async (req, res) => {
   try {
-    const count = await productCount(req.userId);
-    if (count >= MAX_PRODUCTS) {
-      return res
-        .status(400)
-        .json({ message: `Product limit reached (${MAX_PRODUCTS}). Delete some products to add more.` });
-    }
-
     const product = await Product.create({
       ...req.body,
       user: req.userId,
@@ -268,14 +256,6 @@ router.post("/import", protect, async (req, res) => {
       return res.status(400).json({ message: "No products provided" });
     }
 
-    const count = await productCount(req.userId);
-    const available = MAX_PRODUCTS - count;
-    if (products.length > available) {
-      return res.status(400).json({
-        message: `Import would exceed the ${MAX_PRODUCTS} product limit (${available} slot${available !== 1 ? "s" : ""} available).`,
-      });
-    }
-
     const productsToCreate = products.map(p => ({
       name: p.name,
       expiryDate: p.expiryDate,
@@ -329,12 +309,6 @@ router.post("/restore", protect, async (req, res) => {
     
     if (!Array.isArray(products) || products.length === 0) {
       return res.status(400).json({ message: "Invalid backup data" });
-    }
-
-    if (products.length > MAX_PRODUCTS) {
-      return res.status(400).json({
-        message: `Backup contains more than the ${MAX_PRODUCTS} product limit.`,
-      });
     }
 
     // Delete existing products
